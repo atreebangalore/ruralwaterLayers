@@ -1,32 +1,25 @@
-import os
 import sys
 from pathlib import Path
 import lib.gw_utils as gwmod
 import config.groundwater as gwcfg
-import numpy as np
-import pandas as pd
-import geopandas as gpd
 import logging
-from shapely.geometry import Point, LineString, Polygon
 
 
 def main():
-    dataset = sys.argv[1]
-    state = sys.argv[2]
-    try:
-        param = sys.argv[3]
-    except:
-        param=None
-    print("preProcessing '",dataset,"' dataset")
-    path,metacols = gwcfg.get_params(dataset,state,param)
-    radius = 5
+    """reads in a groundwater levels dataset and pre-processes it.
     
-    dfePath = Path.cwd().joinpath("outputs","final","csv",state+"_processed_wElev.csv")
-    dfdPath = Path.cwd().joinpath("outputs","final","csv",state+"_processed_wDiff.csv")
-    metaPath = Path.cwd().joinpath("outputs","final","csv",state+"_metadata.log")
-    gdfePath = Path.cwd().joinpath("outputs","final","shapefiles",state+"_processed_wElev.shp")
-    gdfdPath = Path.cwd().joinpath("outputs","final","shapefiles",state+"_processed_wDiff.shp")
-    tifPath = Path.cwd().joinpath("outputs","final","tif",state+"_processed.tif")
+    preprocesses involves subsetting by state if needed, removing nulls, duplicates
+    and duplicate geometries, then saving to CSV and SHP (with data), SHP (geoms only)
+    
+    Args:
+        state (str): optional, two letter short names for a state to be subsetted
+        
+    Returns:
+        None: preprocessed data saved to outputs folder
+    """
+    state = sys.argv[1]
+    metaPath = Path.cwd().joinpath("outputs","groundwater","csv",state+"_metadata.log")
+    outputsPath = Path.cwd().joinpath("outputs","groundwater")
     
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
@@ -34,9 +27,12 @@ def main():
                         handlers=[logging.FileHandler(str(metaPath))],
                        )
     
+    logging.info("preProcessing '%s' dataset",state)
+    path,metacols = gwcfg.get_params(state)
+    
     # Initialize Well Data Object (df and gdf)
     gwObj = gwmod.WellDataObj(path,metacols)
-    logging.info("df and gdf initialized, shape: %s",str(gwObj.df.shape))
+    logging.info("original df and gdf initialized, shape: %s",str(gwObj.df.shape))
     
     # Subset gdf to a single state
     gwObj.subset_gdf(state)
@@ -48,42 +44,19 @@ def main():
                  number of nulls found & dropped: %d \
                  number of duplicate geometries found & dropped: %d",num_dups,num_nulls,num_geom_dups)
     
-    # Get Elevation above M.S.L. for each lat,long, add elev column to self.gdf
-    gwObj.get_elevations()
-    logging.info("elevations obtained for %s well locations",state)
-    gwObj.compute_elevations()
-    logging.info("depth (wrt MSL) computed for %s well locations",state)
+    # Save processed dataframe to CSV , SHP(without data) and SHP(with data) 
+    dfPath = outputsPath.joinpath("csv", (state + '_processed' + path.suffix))
+    gdfPath = outputsPath.joinpath("shapefiles", (state + '_processed' + ".shp"))
+    gdfPathwData = outputsPath.joinpath("shapefiles", (state + '_processed_wData' + ".shp"))
     
-    # Compute annual recharge and discharge for all wells
-    rd = gwObj.recharge_discharge()
-    print(rd.columns)
-    logging.info("recharge-discharge computed for %s well locations",state)
+    gwObj.df.to_csv(dfPath,index=False)
+    logging.info("saved df to CSV")
+    gwObj.gdf.geometry.to_file(gdfPath,index=False)
+    logging.info("saved gdf (only geometries) to SHP")
+    gwObj.gdf.to_file(gdfPathwData,index=False)
+    logging.info("saved gdf (with data) to SHP")
     
-    # Make self.gdf_proj by Projecting self.gdf and add 5m buffer geometry to self.gdf_proj
-    # gwObj.buffer_geoms(radius)
-    # logging.info("buffer circles of radius %d mts created",radius)
-    
-    # SAVE FILES TO CSV AND SHP
-    dfe = pd.DataFrame(gwObj.gdf)
-    gdfe = gwObj.gdf
 
-    dfD = pd.DataFrame(gwObj.gdf_diff)
-    gdfD = gwObj.gdf_diff
-    
-    logging.info("saving water depths to CSV and SHP")
-    dfe.to_csv(dfePath,index=False)
-    logging.info("single state %s CSV processed and saved to file %s",state,str(dfePath))
-    gdfe.to_file(gdfePath,index=False)
-    logging.info("single state %s SHP processed and saved to file %s",state,str(gdfePath))
-    # saving self.gdf_proj doesn't work
-    # error TypeError: Cannot interpret '<geopandas.array.GeometryDtype object at 0x000001E0C4AD4F48>' as a data type
-    
-    logging.info("saving recharge/discharge to CSV and SHP")
-    dfD.to_csv(dfdPath,index=False)
-    logging.info("single state %s CSV processed and saved to file %s",state,str(dfdPath))
-    gdfD.to_file(gdfdPath,index=False)
-    logging.info("single state %s SHP processed and saved to file %s",state,str(gdfdPath))
-    
 if __name__=='__main__':
     main()
 

@@ -21,24 +21,24 @@ class WellDataObj:
     def __init__(self,path,metacols):
         self.path = path
         self.metacols = metacols + ['geometry','elevation']
-        self.long = [elem for elem in self.metacols if re.search(r"lon",elem.lower()) != None][0]
-        self.lat = [elem for elem in self.metacols if re.search(r"lat",elem.lower()) != None][0]
-        self.stateCol = [elem for elem in self.metacols if re.search(r"state",elem.lower()) != None][0]
+        self.long = [elem for elem in self.metacols if re.search(r"lon",elem.lower()) != None][0]    # Get name of longitude column
+        self.lat = [elem for elem in self.metacols if re.search(r"lat",elem.lower()) != None][0]    # Get name of latitude column
+        self.stateCol = [elem for elem in self.metacols if re.search(r"state",elem.lower()) != None][0]    # Get name of state column
 
-        if path.endswith('.csv'):
+        if path.suffix=='.csv':
             self.df = pd.read_csv(path) 
             self.gdf = self.make_gdf_from_df()
-        elif path.endswith('.xls'):
+        elif path.suffix=='.xls':
             self.df = pd.read_excel(path,skiprows=3)
             self.df = self.df.loc[:, ~self.df.columns.str.match('Unnamed')]
             self.gdf = self.make_gdf_from_df()
-        elif (path.endswith('.zip')):
+        elif path.suffix=='.zip':
             self.gdf = gpd.read_file(path).loc[:,metacols]
             self.df = pd.DataFrame(self.gdf)
         else:
             print("file passed must be either csv or xls")
             pass
-        self.dataCols = [elem for elem in list(self.df.columns) if elem not in self.metacols]
+        self.dataCols = [elem for elem in list(self.df.columns) if elem not in self.metacols]   # Get data cols, i.e. all cols except metacols
         self.gdf_diff = gpd.GeoDataFrame()
         
     def make_gdf_from_df(self):
@@ -52,8 +52,8 @@ class WellDataObj:
     def subset_gdf(self,state=None):
         self.state = state if state is not None else ''
         if len(self.state) > 0:
-            self.gdf = self.gdf[self.gdf.loc[:,self.stateCol]==self.state]
             self.df = self.df[self.df.loc[:,self.stateCol]==self.state]
+            self.gdf = self.make_gdf_from_df()
         else:
             pass
         return self.gdf
@@ -62,21 +62,20 @@ class WellDataObj:
         lenBefore = len(self.df)
         self.df = self.df.drop_duplicates()
         self.num_dups = len(self.df) - lenBefore
-        return self.df
+        self.gdf = self.make_gdf_from_df()
     
     def remove_nulls(self):
         lenBefore = len(self.df)
         self.df = self.df.dropna(how='all',subset=self.dataCols)
         self.df = self.df.dropna(how='any',subset=[self.long,self.lat])
         self.num_nulls = len(self.df) - lenBefore
-        return self.df
+        self.gdf = self.make_gdf_from_df()
     
     def remove_dup_geoms(self):
         self.gdfDup = self.gdf[self.gdf.duplicated('geometry')]
         self.gdf = self.gdf.drop_duplicates('geometry')
-
+        self.df = pd.DataFrame(self.gdf)
         self.num_geom_dups = len(self.gdfDup)
-        return self.gdf
         
     def get_sample_dup_geoms(self):
         random = self.gdfDup.sample(1)
@@ -86,9 +85,9 @@ class WellDataObj:
         return original
     
     def pre_process(self):
-        self.df = self.remove_dups()
-        self.df = self.remove_nulls()
-        self.gdf = self.remove_dup_geoms()
+        self.remove_dups()
+        self.remove_nulls()
+        self.remove_dup_geoms()
         return(self.num_dups,self.num_nulls,self.num_geom_dups)
     
     def buffer_geoms(self,buffer=20):
@@ -107,7 +106,6 @@ class WellDataObj:
         return self.gdf
     
     def compute_elevations(self):
-        self.dataCols.remove('geometry')
         for col in self.dataCols:
             self.gdf[col] = self.gdf['elevation'] - self.gdf[col]
     
