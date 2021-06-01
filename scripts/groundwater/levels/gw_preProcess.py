@@ -1,5 +1,22 @@
+""" STEP 1: gw_preProcess preProcesses single state's groundwater data
+
+reads groundwater levels data directory
+subsets single state
+preprocesses file
+saves single state to csv and shp in outputs/groundwater
+STEP 2: gw_elevations
+
+Typical usage (in terminal from root directory)
+$ python layers/groundwater/levels/gw_preProcess.py [ST]
+
+"""
+
 import sys
 from pathlib import Path
+
+root = Path(__file__).parent.parent.parent.parent.absolute() # find project root
+sys.path.append(str(root))    # this allows lib and config modules below to be found
+
 import lib.gw_utils as gwmod
 import config.groundwater as gwcfg
 import logging
@@ -8,8 +25,8 @@ import logging
 def main():
     """reads in a groundwater levels dataset and pre-processes it.
     
-    preprocesses involves subsetting by state if needed, removing nulls, duplicates
-    and duplicate geometries, then saving to CSV and SHP (with data), SHP (geoms only)
+    preprocessing involves subsetting by State if needed, removing nulls, duplicates
+    and duplicate geometries, then saving to CSV, SHP (with data) and SHP (geoms only)
     
     Args:
         state (str): optional, two letter short names for a state to be subsetted
@@ -18,8 +35,8 @@ def main():
         None: preprocessed data saved to outputs folder
     """
     state = sys.argv[1]
-    metaPath = Path.cwd().joinpath("outputs","groundwater","csv",state+"_metadata.log")
-    outputsPath = Path.cwd().joinpath("outputs","groundwater")
+    metaPath = root.joinpath("outputs","groundwater","csv",state+"_metadata.log")
+    outputsPath = root.joinpath("outputs","groundwater")
     
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
@@ -30,7 +47,7 @@ def main():
     logging.info("preProcessing '%s' dataset",state)
     path,metacols = gwcfg.get_params(state)
     
-    # Initialize Well Data Object (df and gdf)
+    # Initialize Well Data Object (which has self.df and self.gdf (geodataframe))
     gwObj = gwmod.WellDataObj(path,metacols)
     logging.info("original df and gdf initialized, shape: %s",str(gwObj.df.shape))
     

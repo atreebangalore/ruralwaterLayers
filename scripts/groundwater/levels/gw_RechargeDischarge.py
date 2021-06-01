@@ -1,5 +1,19 @@
+"""STEP 3: gw_rasterize computes elevations for a point shape file of well locations
+
+reads in a pre-processed groundwater layer (STEP 2) with depth to water (above MSL) (CSV) and returns monsoon recharge, non-monsoon discharge for all years
+
+Typical usage (in terminal from root directory)
+$ python layers/groundwater/levels/gw_rechargedischarge.py [ST]
+check outputs folder "outputs/groundwater/tif"
+
+"""
+
 import sys
 from pathlib import Path
+
+root = Path(__file__).parent.parent.parent.parent.absolute() # find project root
+sys.path.append(str(root))    # this allows lib and config modules below to be found
+
 import lib.gw_utils as gwmod
 import config.groundwater as gwcfg
 import numpy as np
@@ -18,8 +32,8 @@ def main():
     
     """
     state = sys.argv[1]
-    metaPath = Path.cwd().joinpath("outputs","groundwater","csv",state+"_metadata.log")
-    outputsPath = Path.cwd().joinpath("outputs","groundwater")
+    metaPath = root.joinpath("outputs","groundwater","csv",state+"_metadata.log")
+    outputsPath = root.joinpath("outputs","groundwater")
     
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
@@ -38,6 +52,7 @@ def main():
     rd = gwObj.recharge_discharge()
     logging.info("recharge-discharge computed for %s well locations",state)
 
+    # Assign output paths
     dfdPath = outputsPath.joinpath("csv",state+"_processed_wRD.csv")
     gdfdPath = outputsPath.joinpath("shapefiles",state+"_processed_wRD.shp")
 
