@@ -4,7 +4,7 @@ below are a few examples showing how to run these scripts yourself <br>
 # Groundwater
 
 ## Groundwater levels
----
+
 ### Original dataset
 CSV : data\groundwater\cgwb_stationwise_historical\CGWB_original.csv
 Columns: STATE, DISTRICT, LAT, LON, SITE_TYPE, WLCODE, May-96, Aug-96, Nov-96, Jan-97,... Nov-16, Jan-17 <br>
@@ -49,12 +49,11 @@ outputs/groundwater/shapefiles/[ST]_processed_wRD.shp <br>
 
 
 ## Geology
----
 To be completed
 
 
 # Evapotranspiration
----
+
 ### Import
 Source: [monthly ET](https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/fews/web/global/monthly/eta/downloads/) , [yearly ET](https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/fews/web/global/yearly/eta/downloads/)
 requires command line tool 'wget' to be installed'
@@ -65,7 +64,7 @@ use gdal batch script in layers/evapotranspiration/
 
 
 # Rainfall
----
+
 Source: [historical rainfall](https://imdpune.gov.in/Clim_Pred_LRF_New/Grided_Data_Download.html)
 
 

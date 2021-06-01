@@ -13,6 +13,12 @@ def main():
     bucketname = sys.argv[2]
     geeuser = sys.argv[3]
     geecoll = sys.argv[4]
+    try:
+        contd = sys.argv[5]
+        contd = 'gs://' + bucketname + "/" + contd + ".tif"
+        print(contd)
+    except:
+        contd = None
     
     bucket = 'gs://' + bucketname + "/"
     print("bucket url: ",bucket)
@@ -23,8 +29,11 @@ def main():
     gs_tiffs = os.popen(gs_command,mode='r').read().strip().split('\n')
     print('Total number of files: {}'.format(len(gs_tiffs)))
     
-    li = []
-    
+    if contd:
+        index = gs_tiffs.index(contd)
+        gs_tiffs = gs_tiffs[index:]
+        print("files remaining to upload: ",len(gs_tiffs))
+        
     for tif in gs_tiffs:
         print("copying from GCP bucket: ",tif)
         fbname = tif.replace(bucket, '').replace('.tif', '')  # get image name
