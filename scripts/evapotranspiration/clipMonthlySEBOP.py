@@ -10,6 +10,8 @@ import geopandas as gpd
 import numpy as np
 
 dataFol = Path.home().joinpath("Data","et","sebop")
+dataFol.mkdir(parents=True)
+
 soi_boundary = Path.home().joinpath("Data","gis","soi_national_boundary.shp")
 
 
