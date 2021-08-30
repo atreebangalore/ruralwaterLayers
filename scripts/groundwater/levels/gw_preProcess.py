@@ -16,7 +16,10 @@ from pathlib import Path
 
 root = Path(__file__).parent.parent.parent.parent.absolute() # find project root
 #sys.path.append(str(root))    # this allows lib and config modules below to be found
-
+csvFol = Path.cwd().joinpath("Outputs","groundwater","csv") #this allows creating Outputs folder and csv subfolder in root directory
+csvFol.mkdir(parents=True, exist_ok=True)
+shapeFol = Path.cwd().joinpath("Outputs","groundwater","shapefiles") #this allows creating Outputs folder and shapefiles subfolder in root directory
+shapeFol.mkdir(parents=True, exist_ok=True)
 import gw_utils as gwmod
 import config.groundwater as gwcfg
 import logging
