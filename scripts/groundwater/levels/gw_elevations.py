@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 root = Path(__file__).parent.parent.parent.parent.absolute() # find project root
-sys.path.append(str(root))    # this allows lib and config modules below to be found
+#sys.path.append(str(root))    # this allows lib and config modules below to be found
 
 import gw_utils as gwmod
 import config.groundwater as gwcfg
