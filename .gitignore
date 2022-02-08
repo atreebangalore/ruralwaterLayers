@@ -6,3 +6,7 @@ outputs/*
 __pycache__
 **tmp.py
 IO_Data Catalog.xlsx
+qgis/
+*.json
+*.txt
+*.bat
