@@ -7,6 +7,7 @@ saves single state / whole country to csv and shp in outputs/groundwater/levels/
 
 Typical usage (in terminal from root directory)
 $ python layers/groundwater/levels/gw_preProcess.py [KA,MH]
+check outputs folder "outputs/groundwater/levels/" 
 
 """
 

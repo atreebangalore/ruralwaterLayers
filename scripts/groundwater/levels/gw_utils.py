@@ -20,7 +20,7 @@ ee.Initialize()
 class WellDataObj:
     def __init__(self,path,metacols):
         self.path = path
-        self.metacols = metacols + ['geometry','elevation']
+        self.metacols = metacols + ['geometry'] #,'elevation'
         self.long = [elem for elem in self.metacols if re.search(r"lon",elem.lower()) != None][0]    # Get name of longitude column
         self.lat = [elem for elem in self.metacols if re.search(r"lat",elem.lower()) != None][0]    # Get name of latitude column
         self.stateCol = [elem for elem in self.metacols if re.search(r"state",elem.lower()) != None][0]    # Get name of state column
@@ -38,7 +38,8 @@ class WellDataObj:
         else:
             print("file passed must be either csv or xls")
             pass
-        self.dataCols = [elem for elem in list(self.df.columns) if elem not in self.metacols]   # Get data cols, i.e. all cols except metacols
+        self.dataCols = [elem for elem in list(self.df.columns) if re.search(r'\d+$', elem) is not None]   # Get data cols, i.e. all cols except metacols
+        print(self.dataCols)
         self.gdf_diff = gpd.GeoDataFrame()
         
     def make_gdf_from_df(self):
@@ -49,10 +50,13 @@ class WellDataObj:
                                    )
         return self.gdf
     
-    def subset_gdf(self,state=None):
-        self.state = state if state is not None else ''
-        if len(self.state) > 0:
-            self.df = self.df[self.df.loc[:,self.stateCol]==self.state]
+    def subset_gdf(self,states=None):
+        self.states = "" if ((states is None) or (states == "IN")) else states
+        
+        self.states_list = self.states.split("_")
+            
+        if len(self.states_list[0]) > 0:
+            self.df = self.df[self.df[self.stateCol].isin(self.states_list)]
             self.gdf = self.make_gdf_from_df()
         else:
             pass
@@ -119,9 +123,9 @@ class WellDataObj:
         for elem in self.metacols:                            # WILL THROW ERRORS IF KEY NOT FOUND
             self.gdf_diff[elem] = self.gdf[elem]
         for pre,post,year in recharge:
-            self.gdf_diff['rech-' + year] = self.gdf[post] - self.gdf[pre]
+            self.gdf_diff['rech-' + year] = - self.gdf[post] - (-self.gdf[pre])    # -4.78 - (-6.34)    e.g. # Nov 96 - May 96
         for post,pre,year in discharge:
-            self.gdf_diff['disc-' + year] = self.gdf[post] - self.gdf[pre]
+            self.gdf_diff['disc-' + year] = - self.gdf[post] - (-self.gdf[pre])    # -4.78 - (-6.1)   e.g. # Nov 96 - May 97
         self.gdf_diff['geometry'] = self.gdf['geometry']
         return self.gdf_diff       
         

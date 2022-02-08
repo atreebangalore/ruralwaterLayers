@@ -29,7 +29,7 @@ def main():
     """reads in a pre-processed groundwater layer (SHP) and returns elevations of depth-to-water (above MSL) for each 
     
     Args:
-        state(str): state for which well elevations must be obtained
+        state(str): states or [list,of,states] for which well elevations must be obtained
         
     Returns:
         None: well elevations with locations stored in CSV as SHP
@@ -39,7 +39,6 @@ def main():
     states_str = "_".join(states)    # KA_MH
     
     metaPath = opPath.joinpath(states_str+"_metadata.log")
-    outputsPath = root.joinpath("outputs","groundwater")
     
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
@@ -62,6 +61,7 @@ def main():
     gwObj.compute_elevations()
     logging.info("depth (wrt MSL) computed for %s well locations",states_str)
 
+    # Assign output paths
     dfePath = opPath.joinpath(states_str+"_processed_wElev.csv")
     gdfePath = opPath.joinpath("shapefiles",states_str+"_processed_wElev.shp")
 
