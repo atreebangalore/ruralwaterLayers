@@ -54,7 +54,7 @@ def main():
     pixValues = [elem['properties'][et_col] for elem in pixDict['features']]
     
     etTable = pd.DataFrame({'districts':districts,et_col:pixValues})
-    filePath = opPath.joinpath(gini_col + "_" + states_str + ".csv")
+    filePath = opPath.joinpath(et_col + "_" + states_str + ".csv")
     print("file saved with filename",filePath)
     
     etTable.to_csv(filePath,index=False)
