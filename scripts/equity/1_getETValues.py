@@ -1,5 +1,6 @@
 """
-Given the SEBOP annual ET image, extract pixel Values for chosen districts
+Extraction of district wise ET pixel values for chosen States, 
+with the SEBOP annual ET image (from GEE) as input.
 """
 from pathlib import Path
 import ee
@@ -17,6 +18,17 @@ import placenames
 
 def main():
     """
+    python Code/atree/scripts/equity/1_getETValues.py [arguments]
+    
+    Arguments:
+    year: water year for Image filter. (YYYY)
+    state names: two letter abbreviated state names seperated by comma.
+    
+    Example:
+    python Code/atree/scripts/equity/1_getETValues.py 2018 KA,TN
+    
+    Output:
+    csv file saved at Code/atree/outputs/equity
     """
     year = int(sys.argv[1])
     states = sys.argv[2].replace("[","").replace("]","").split(",")
