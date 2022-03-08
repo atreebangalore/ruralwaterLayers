@@ -5,19 +5,16 @@ The output SEBOP ET image of getMonthlySEBOP for
 specified month and year located at {Home Dir}/Data/et/sebop/
 in zip format will be the input for this script.
 """
-import os,sys
+import sys
 from pathlib import Path
-from subprocess import check_output
 from zipfile import ZipFile
 
 import fiona
 import rasterio
 from rasterio.mask import mask
-import geopandas as gpd
-import numpy as np
 
 dataFol = Path.home().joinpath("Data","et","sebop")
-dataFol.mkdir(parents=True)
+dataFol.mkdir(parents=True,exist_ok=True)
 
 soi_boundary = Path.home().joinpath("Data","gis","soi_national_boundary.shp")
 
@@ -46,13 +43,13 @@ def main():
     zipname = "m" + str(year) + str(month) + ".zip"
     print("name of zip file: ",zipname)
     
-    zippath = str(dataFol) + "\\" + zipname
+    zippath = dataFol.joinpath(zipname)
     print("path of zip file: ",zippath)
     
     with ZipFile(zippath, 'r') as zip:
         # printing all the contents of the zip file
         tifname = [name for name in zip.namelist() if name.endswith('.tif')][0]
-        tifpath = str(dataFol) + "\\" + tifname
+        tifpath = dataFol.joinpath(tifname)
         print("path of tif file: ",tifpath)
 
         # extracting all the files
