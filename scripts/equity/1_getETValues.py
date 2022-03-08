@@ -11,7 +11,7 @@ root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
 sys.path += [str(root),str(config)]
 opPath = root.joinpath("Code","atree","outputs","equity")
-print("data saved in :",opPath)
+opPath.mkdir(parents=True,exist_ok=True) # create if not exist
 
 import placenames
 
@@ -55,9 +55,9 @@ def main():
     
     etTable = pd.DataFrame({'districts':districts,et_col:pixValues})
     filePath = opPath.joinpath(et_col + "_" + states_str + ".csv")
-    print("file saved with filename",filePath)
     
     etTable.to_csv(filePath,index=False)
+    print("file saved with filename",filePath)
 
 if __name__=='__main__':
     main()
