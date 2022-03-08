@@ -1,3 +1,8 @@
+"""
+Download of SEBOP ET images from the USGS portal
+for the given year and month provided as arguments.
+This script requires wget to be installed.
+"""
 import os,sys
 from pathlib import Path
 from subprocess import check_output
@@ -15,7 +20,18 @@ elif platform.system() == 'Darwin':
 
     
 def main():
-    """downloads monthly SEBOP ET images from USGS website
+    """Downloads SEBOP ET images,
+    by generating corresponding wget command.
+    
+    Args:
+        year (YYYY): year for the monthly SEBOP ET images to be fetched.
+        month (MM): specific month for the SEBOP ET image to be downloaded.
+    
+    Example:
+    python Code/atree/scripts/evapotranspiration/getMonthlySEBOP.py 2019 06
+    
+    Output:
+    zip file will be stored in {Home Dir}/Data/et/sebop/
     """
     
     year = sys.argv[1]
