@@ -1,5 +1,6 @@
 """
-Given the ET Values in a CSV, calculate Gini for chosen districts
+Calculation of Gini coefficient for districts of chosen states,
+input is csv file of ET values, output of previous script.
 """
 
 from pathlib import Path
@@ -17,6 +18,11 @@ print("data saved in :",opPath)
 import placenames
 
 def gini(arr):
+    """Calculation of gini coefficient.
+
+    Args:
+        arr (numpy array): Array of ET values for a district.
+    """
     ## first sort
     sorted_arr = arr.copy()
     sorted_arr.sort()
@@ -30,6 +36,17 @@ def gini(arr):
 
 def main():
     """
+    python Code/atree/scripts/equity/2_calcGiniValues.py [arguments]
+    
+    Arguments:
+    year: water year provided in getETValues script. (YYYY)
+    state names: two letter abbreviated state names seperated by comma.
+    
+    Example:
+    python Code/atree/scripts/equity/2_calcGiniValues.py 2018 KA,TN
+    
+    Output:
+    csv file saved at Code/atree/outputs/equity
     """
     year = int(sys.argv[1])
     states = sys.argv[2].replace("[","").replace("]","").split(",")
