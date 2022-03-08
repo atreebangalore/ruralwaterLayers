@@ -4,6 +4,7 @@ input is csv file of ET values, output of previous script.
 """
 
 from pathlib import Path
+from re import T
 import sys
 import pandas as pd
 import numpy as np
@@ -13,7 +14,7 @@ root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
 sys.path += [str(root),str(config)]
 opPath = root.joinpath("Code","atree","outputs","equity")
-print("data saved in :",opPath)
+opPath.mkdir(parents=True, exist_ok=True) # create if not exist
 
 import placenames
 
@@ -75,9 +76,9 @@ def main():
         etTable.loc[etTable['districts']==district,'gini'] = giniDict[district]
         
     filePath = opPath.joinpath(gini_col + "_" + states_str + ".csv")
-    print("file saved with filename",filePath)
     
     etTable.to_csv(filePath,index=False)
+    print("file saved with filename",filePath)
     
 if __name__=='__main__':
     main()
