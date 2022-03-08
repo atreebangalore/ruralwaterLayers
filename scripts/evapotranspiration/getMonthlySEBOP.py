@@ -3,7 +3,7 @@ Download of SEBOP ET images from the USGS portal
 for the given year and month provided as arguments.
 This script requires wget to be installed.
 """
-import os,sys
+import sys
 from pathlib import Path
 from subprocess import check_output
 import platform
@@ -16,7 +16,7 @@ if platform.system()=='Windows':
 elif platform.system() == 'Linux':
     wget_path = ""  #change this path to wget location for Linux
 elif platform.system() == 'Darwin':
-    wget_path = ""  #change this path to wget location for Darwin
+    wget_path = "/usr/local/bin/wget"  #change this path to wget location for Darwin
 
     
 def main():
@@ -45,8 +45,7 @@ def main():
     wget_comm = wget_path + " " + dir_prefix + " " + monthly_url + filename
     print(wget_comm)
     
-    output = check_output(wget_comm)
-    print(output)
+    output = check_output(wget_comm, shell=True)
 
 if __name__=="__main__":
     main()
