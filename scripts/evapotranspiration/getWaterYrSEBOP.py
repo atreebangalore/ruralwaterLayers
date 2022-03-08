@@ -9,13 +9,11 @@ from pathlib import Path
 from zipfile import ZipFile
 import glob
 
-from matplotlib import pyplot as plt
 import numpy as np
 
 import fiona
 import rasterio
 from rasterio.mask import mask
-import geopandas as gpd
 
 dataFol = Path.home().joinpath("Data","et","sebop")
 dataFol.mkdir(parents=True, exist_ok=True)
@@ -124,11 +122,12 @@ def main():
     
     ###############    GET MONTHLY IMAGES    ################
     # PREPARE COMMAND
-    getMonthly = "python getMonthlySEBOP.py {year} {month}"
+    scr = Path(__file__).parent.joinpath('getMonthlySEBOP.py')
+    getMonthly = "python {scr} {year} {month}"
     
     # CALL getMonthlySEBOP.py
     for year,month in monthyearseq:
-        os.system(getMonthly.format(year=year,month=month))
+        os.system(getMonthly.format(scr=scr,year=year,month=month))
 
     ###############    UNZIP & CLIP MONTHLY IMAGES  ################
     for year,month in monthyearseq:
