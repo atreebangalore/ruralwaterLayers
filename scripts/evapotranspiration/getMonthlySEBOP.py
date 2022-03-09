@@ -14,7 +14,7 @@ dataFol.mkdir(parents=True,exist_ok=True)
 if platform.system()=='Windows':
     wget_path = "C:\Windows\System32\wget.exe"
 elif platform.system() == 'Linux':
-    wget_path = ""  #change this path to wget location for Linux
+    wget_path = "/usr/bin/wget"  #change this path to wget location for Linux
 elif platform.system() == 'Darwin':
     wget_path = "/usr/local/bin/wget"  #change this path to wget location for Darwin
 
