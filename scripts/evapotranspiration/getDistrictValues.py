@@ -16,7 +16,7 @@ boundaries = Path.home().joinpath("Data","gis")
 # sys.path.append(str(root))    # this allows lib and config modules below to be found
 
 
-def clipValues(geom,tifPath,state,district,year):
+def clipValues(geom,tifPath,district,year):
     """Extraction of ET SEBOP Pixel Values.
     requires individual shape files for the states
     to be located at {Home Dir}/Data/gis
