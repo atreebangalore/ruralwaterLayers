@@ -42,7 +42,9 @@ def clipValues(geom,tifPath,district,year):
     values = etdata[np.where(etdata!=no_data)]
     print("median: ", np.median(values),"\n",
         "range: ", np.max(values)-np.min(values))
-    statsPath = data.joinpath("stats",district + "_" + year + ".csv")
+    statsPath = data.joinpath("stats")
+    statsPath.mkdir(parents=True,exist_ok=True) # create if not exist
+    statsPath = statsPath.joinpath(district + "_" + year + ".csv")
 #     print(statsPath)
     values.tofile(statsPath, sep = ',')
     
