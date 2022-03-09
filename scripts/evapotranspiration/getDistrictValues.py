@@ -1,5 +1,8 @@
+"""
+Extract the ET SEBOP raster pixel values of every
+district in the chosen state for the water year of imagery.
+"""
 # https://gis.stackexchange.com/questions/260304/extract-raster-values-within-shapefile-with-pygeoprocessing-or-gdal
-
 import sys
 from pathlib import Path
 import rasterio
@@ -14,6 +17,16 @@ boundaries = Path.home().joinpath("Data","gis")
 
 
 def clipValues(geom,tifPath,state,district,year):
+    """Extraction of ET SEBOP Pixel Values.
+    requires individual shape files for the states
+    to be located at {Home Dir}/Data/gis
+
+    Args:
+        geom (geojson): geometry of the district
+        tifPath (string): Path of ET SEBOP raster
+        district (string): name of the district
+        year (integer): argument provided to the script
+    """
     # extract the raster values values within the polygon 
     with rasterio.open(tifPath) as src:
         out_image, out_transform = mask(src, geom, crop=True)
@@ -28,12 +41,26 @@ def clipValues(geom,tifPath,state,district,year):
     
     values = etdata[np.where(etdata!=no_data)]
     print("median: ", np.median(values),"\n",
-          "range: ", np.max(values)-np.min(values))
+        "range: ", np.max(values)-np.min(values))
     statsPath = data.joinpath("stats",district + "_" + year + ".csv")
 #     print(statsPath)
     values.tofile(statsPath, sep = ',')
     
 def main():
+    """Extraction of ET pixel values of all districts
+    in the chosen state
+    
+    Args:
+    state name (string): state name as in {state}_district_boundary.shp
+    year: year for which getWaterYrSEBOP.py was executed
+    
+    Example:
+    python Code/atree/scripts/evapotranspiration/getDistrictValues.py tamilnadu 2019
+    
+    Output:
+    individual csv files for all districts in the path
+    Code/data/evapotranspiration/SEBOP/yearly/stats
+    """
     state = sys.argv[1]
     year = sys.argv[2]
     
