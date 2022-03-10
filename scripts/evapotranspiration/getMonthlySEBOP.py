@@ -24,13 +24,18 @@ def main():
     monthly_url = "https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/fews/web/global/monthly/eta/downloads/"
     filename = "m" + str(year) + str(month) + ".zip"    # "m200306.zip"
     print(filename)
-    dir_prefix = "-P " + "\"" + str(dataFol) + "\""
-    print(dir_prefix)
-    wget_comm = wget_path + " " + dir_prefix + " " + monthly_url + filename
-    print(wget_comm)
+    exists = dataFol.joinpath(filename).exists()
+    print(exists)
+
+    if not exists:
+        print("file does not exist, hence downloading...")
+        dir_prefix = "-P " + "\"" + str(dataFol) + "\""
+        print(dir_prefix)
+        wget_comm = wget_path + " " + dir_prefix + " " + monthly_url + filename
+        print(wget_comm)
     
-    output = check_output(wget_comm)
-    print(output)
+        output = check_output(wget_comm,shell=True)
+        print(output)
 
 if __name__=="__main__":
     main()
