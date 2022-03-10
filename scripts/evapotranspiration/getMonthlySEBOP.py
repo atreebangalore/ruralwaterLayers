@@ -1,4 +1,9 @@
-import os,sys
+"""
+Download of SEBOP ET images from the USGS portal
+for the given year and month provided as arguments.
+This script requires wget to be installed.
+"""
+import sys
 from pathlib import Path
 from subprocess import check_output
 import platform
@@ -9,13 +14,24 @@ dataFol.mkdir(parents=True,exist_ok=True)
 if platform.system()=='Windows':
     wget_path = "C:\Windows\System32\wget.exe"
 elif platform.system() == 'Linux':
-    wget_path = ""  #change this path to wget location for Linux
+    wget_path = "/usr/bin/wget"  #change this path to wget location for Linux
 elif platform.system() == 'Darwin':
-    wget_path = ""  #change this path to wget location for Darwin
+    wget_path = "/usr/local/bin/wget"  #change this path to wget location for Darwin
 
     
 def main():
-    """downloads monthly SEBOP ET images from USGS website
+    """Downloads SEBOP ET images,
+    by generating corresponding wget command.
+    
+    Args:
+        year (YYYY): year for the monthly SEBOP ET images to be fetched.
+        month (MM): specific month for the SEBOP ET image to be downloaded.
+    
+    Example:
+    python Code/atree/scripts/evapotranspiration/getMonthlySEBOP.py 2019 06
+    
+    Output:
+    zip file will be stored in {Home Dir}/Data/et/sebop/
     """
     
     year = sys.argv[1]
@@ -29,8 +45,7 @@ def main():
     wget_comm = wget_path + " " + dir_prefix + " " + monthly_url + filename
     print(wget_comm)
     
-    output = check_output(wget_comm)
-    print(output)
+    output = check_output(wget_comm, shell=True)
 
 if __name__=="__main__":
     main()

@@ -1,15 +1,19 @@
+"""
+Download of Monthly SEBOP ET images,
+sums the monthly raster values for the water year and
+clips the water year ET Raster image to 
+National Boundary extent.
+"""
 import os,sys
 from pathlib import Path
 from zipfile import ZipFile
 import glob
 
-from matplotlib import pyplot as plt
 import numpy as np
 
 import fiona
 import rasterio
 from rasterio.mask import mask
-import geopandas as gpd
 
 dataFol = Path.home().joinpath("Data","et","sebop")
 dataFol.mkdir(parents=True, exist_ok=True)
@@ -24,6 +28,12 @@ with fiona.open(str(soi_boundary), "r") as shapefile:
     print("india boundary imported for clip")
 
 def makeAnnualImage(matches,yr):
+    """Sums the monthly ET images into a single ET imagery.
+
+    Args:
+        matches (list): list of monthly ET images 
+        yr (string): year presented as arg for the script
+    """
     # READ IN FILES TO BE SUMMED
     sum = None
     for file in matches:
@@ -47,6 +57,11 @@ def makeAnnualImage(matches,yr):
         print("SEBOP Water Year Cumulative Sum image written to file: ",sum_tifpath)
 
 def clipImage(tifpath):
+    """clips the given imagery to the soi_national_boundary.shp extent
+
+    Args:
+        tifpath (string): path to the SEBOP ET imagery (tif).
+    """
     # using rasterio to open and mask image
     with rasterio.open(str(tifpath)) as src:
         out_image, out_transform = mask(src, shapes, crop=True)
@@ -54,9 +69,9 @@ def clipImage(tifpath):
         print("SEBOP image clipped")
     
     out_meta.update({"driver": "GTiff",
-                 "height": out_image.shape[1],
-                 "width": out_image.shape[2],
-                 "transform": out_transform})
+                "height": out_image.shape[1],
+                "width": out_image.shape[2],
+                "transform": out_transform})
     
     india_tifpath = Path(tifpath).parent.joinpath(Path(tifpath).stem + "_india" + Path(tifpath).suffix)
     
@@ -64,13 +79,18 @@ def clipImage(tifpath):
         dest.write(out_image)
         print("SEBOP image written to file: ",india_tifpath)
 
-def unzipImage(zippath):    
+def unzipImage(zippath):
+    """extract the monthly SEBOP ET image
+
+    Args:
+        zippath (string): Path of the downloaded zip file.
+    """
     with ZipFile(zippath, 'r') as zip:
         # printing all the contents of the zip file
         tifname = [name for name in zip.namelist() if name.endswith('.tif')][0]
         tifpath = str(dataFol.joinpath(tifname))
         print("path of tif file: ",tifpath)
-  
+
         # extracting all the files
         print('Extracting all the files now...')
         zip.extractall(path=str(dataFol))
@@ -78,7 +98,18 @@ def unzipImage(zippath):
         clipImage(tifpath)
         
 def main():
-    """calculates raster sum of monthly SEBOP ET images for water year, clips image and saves to file
+    """Downloads SEBOP ET images using getMonthlySEBOP.py,
+    extracts and clips the monthly imagery to National Boundary extent.
+    Finally sums to get SEBOP ET imagery for water year.
+    
+    Args:
+        year (YYYY): year for the SEBOP ET image to be generated.
+    
+    Example:
+    python Code/atree/scripts/evapotranspiration/getWaterYrSEBOP.py 2019
+    
+    Output:
+    tif image for water year will be stored in {Home Dir}/Data/et/sebop/
     """
     
     yr = sys.argv[1]
@@ -91,12 +122,13 @@ def main():
     
     ###############    GET MONTHLY IMAGES    ################
     # PREPARE COMMAND
-    getMonthly = "python getMonthlySEBOP.py {year} {month}"
+    scr = Path(__file__).parent.joinpath('getMonthlySEBOP.py')
+    getMonthly = "python {scr} {year} {month}"
     
     # CALL getMonthlySEBOP.py
     for year,month in monthyearseq:
-        os.system(getMonthly.format(year=year,month=month))
-   
+        os.system(getMonthly.format(scr=scr,year=year,month=month))
+
     ###############    UNZIP & CLIP MONTHLY IMAGES  ################
     for year,month in monthyearseq:
         # opening the zip file
