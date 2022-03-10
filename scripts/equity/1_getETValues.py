@@ -1,5 +1,6 @@
 """
-Given the SEBOP annual ET image, extract pixel Values for chosen districts
+Extraction of district wise ET pixel values for chosen States, 
+with the SEBOP annual ET image (from GEE) as input.
 """
 from pathlib import Path
 import ee
@@ -11,12 +12,23 @@ root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
 sys.path += [str(root),str(config)]
 opPath = root.joinpath("Code","atree","outputs","equity")
-print("data saved in :",opPath)
+opPath.mkdir(parents=True,exist_ok=True) # create if not exist
 
 import placenames
 
 def main():
     """
+    python Code/atree/scripts/equity/1_getETValues.py [arguments]
+    
+    Arguments:
+    year: water year for Image filter. (YYYY)
+    state names: two letter abbreviated state names seperated by comma.
+    
+    Example:
+    python Code/atree/scripts/equity/1_getETValues.py 2018 KA,TN
+    
+    Output:
+    csv file saved at Code/atree/outputs/equity
     """
     year = int(sys.argv[1])
     states = sys.argv[2].replace("[","").replace("]","").split(",")
@@ -54,10 +66,10 @@ def main():
     pixValues = [elem['properties'][et_col] for elem in pixDict['features']]
     
     etTable = pd.DataFrame({'districts':districts,et_col:pixValues})
-    filePath = opPath.joinpath(gini_col + "_" + states_str + ".csv")
-    print("file saved with filename",filePath)
+    filePath = opPath.joinpath(et_col + "_" + states_str + ".csv")
     
     etTable.to_csv(filePath,index=False)
+    print("file saved with filename",filePath)
 
 if __name__=='__main__':
     main()
