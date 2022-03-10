@@ -95,41 +95,41 @@ def main():
     
     # CALL getMonthlySEBOP.py
     for year,month in monthyearseq:
-        os.system(getMonthly.format(year=year,month=month))
+        try:
+            os.system(getMonthly.format(year=year,month=month))
+        except:
+            downloadStatus = "fail"
+            sys.exit(f"monthly download failed, year:{year}, month:{month}")
+
+    downloadStatus = "success"
+    # print("download successful ")
    
     ###############    UNZIP & CLIP MONTHLY IMAGES  ################
-    for year,month in monthyearseq:
-        # opening the zip file
-        zipname = "m" + str(year) + str(month) + ".zip"
-        print("name of zip file: ",zipname)
-    
-        zippath = str(dataFol.joinpath(zipname))
-        print("path of zip file: ",zippath)
-        unzipImage(zippath)
-    
-    ###############    PREP YEARLY IMAGE     ################
-    # GENERATE LIST OF FILENAMES LIKE 'm200306*_india.tif','m200307*_india.tif',..
-    monthlyfn = ['m' + year + month + "*_india.tif" for year,month in monthyearseq]
-    print("monthly files to filter: ",monthlyfn,"\n")
-    
-    # FILTER FILES IN DATA FOLDER TO BE SUMMED
-    os.chdir(str(dataFol))
-    matches = []
-    for pattern in monthlyfn:
-        fn = glob.glob(pattern)
-        matches += fn
+
+    if downloadStatus == "success":
+        for year,month in monthyearseq:
+          # opening the zip file
+            zipname = "m" + str(year) + str(month) + ".zip"
+            print("name of zip file: ",zipname)
         
-    print("tifs to be summed: ",matches)
-    makeAnnualImage(matches,yr)
+            zippath = str(dataFol.joinpath(zipname))
+            print("path of zip file: ",zippath)
+            unzipImage(zippath)
     
-    ###############    UPLOAD YEARLY IMAGE     ################
-    # to be completed
+        ###############    PREP YEARLY IMAGE     ################
+        # GENERATE LIST OF FILENAMES LIKE 'm200306*_india.tif','m200307*_india.tif',..
+        monthlyfn = ['m' + year + month + "*_india.tif" for year,month in monthyearseq]
+        print("monthly files to filter: ",monthlyfn,"\n")
     
-    #### GCP / GEE SETTINGS
-    
-    #### UPLOAD TO GCP
-    
-    #### UPLOAD TO GEE
+        # FILTER FILES IN DATA FOLDER TO BE SUMMED
+        os.chdir(str(dataFol))
+        matches = []
+        for pattern in monthlyfn:
+            fn = glob.glob(pattern)
+            matches += fn
+            
+        print("tifs to be summed: ",matches)
+        makeAnnualImage(matches,yr)
     
 if __name__=="__main__":
     main()
