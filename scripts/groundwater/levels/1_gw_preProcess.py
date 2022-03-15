@@ -40,13 +40,15 @@ def main():
     states = sys.argv[1].replace("[","").replace("]","").split(",")    # [KA,MH] (str) -> [KA,MH] (list) 
     states_str = "_".join(states)    # KA_MH
 
+    opPath.mkdir(parents=True,exist_ok=True)
     metaPath = opPath.joinpath(states_str+"_metadata.log")
+    metaPath.touch(exist_ok=True)
     
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %I:%M:%S %p',
                         handlers=[logging.FileHandler(str(metaPath))],
-                       )
+                        )
     logging.info("preProcessing dataset for '%s' ",states_str)
     
     # get path of data file and cols to extract
@@ -64,8 +66,8 @@ def main():
     # Remove Duplicates (entire row)  ,Remove Null Data Rows,  Drop Duplicate geometries
     num_dups,num_nulls,num_geom_dups = gwObj.pre_process()
     logging.info("number of duplicates found & dropped: %d \
-                 number of nulls found & dropped: %d \
-                 number of duplicate geometries found & dropped: %d",num_dups,num_nulls,num_geom_dups)
+                number of nulls found & dropped: %d \
+                number of duplicate geometries found & dropped: %d",num_dups,num_nulls,num_geom_dups)
     
     # Save processed dataframe to CSV , SHP(without data) and SHP(with data) 
     dfPath = opPath.joinpath(states_str + '_processed' + path.suffix)
