@@ -1,3 +1,8 @@
+"""Parameters to define properties in grd to tif conversion
+
+Returns:
+    dictionary: height, width, affine transform values
+"""
 from rasterio.transform import Affine
 
 

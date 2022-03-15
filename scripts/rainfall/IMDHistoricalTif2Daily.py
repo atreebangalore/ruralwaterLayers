@@ -1,5 +1,8 @@
+"""
+Extracts the bands of annual tif imagery
+into individual daily tif imagery
+"""
 import sys
-import os
 from pathlib import Path
 import rasterio
 import tif
@@ -11,21 +14,38 @@ dataFol = Path.home().joinpath('Data','imd')
 params = tif.get_params()
 
 def write_band(output_filepath,var_type,band,height,width):
+    """writes the individual band data into seperate tif image
+
+    Args:
+        output_filepath (string): location of the output tif image
+        var_type (string): rain or tmin or tmax
+        band (numpy array): individual day band
+        height (integer): height of the image
+        width (integer): width of the image
+    """
     transform = params[var_type]['affine']
     dailyTif = rasterio.open(output_filepath,
-                             'w',
-                             driver='GTiff',
-                             height=height,
-                             width=width,
-                             count=1,
-                             nodata=-999,
-                             dtype=np.float64,
-                             crs='+proj=latlong',
-                             transform=transform)
+                            'w',
+                            driver='GTiff',
+                            height=height,
+                            width=width,
+                            count=1,
+                            nodata=-999,
+                            dtype=np.float64,
+                            crs='+proj=latlong',
+                            transform=transform)
     dailyTif.write(band,1)
     dailyTif.close()
 
-def split_annual_tif(var_type,start_yr,end_yr):    #
+def split_annual_tif(var_type,start_yr,end_yr):
+    """splits the annual tif into seperate daily bands and
+    calls write_band to write the daily band into tif imagery
+
+    Args:
+        var_type (string): rain or tmin or tmax
+        start_yr (integer): year provided as arg to script
+        end_yr (integer): year provided as arg to script
+    """
     ifmt = 'tif'
     li = []
     for year in range(start_yr,end_yr+1):
@@ -56,6 +76,19 @@ def split_annual_tif(var_type,start_yr,end_yr):    #
     return li
 
 def main():
+    """splits the annual image into daily images
+    
+    Args:
+    var_type (string): rain or tmin or tmax
+    start_yr (string): starting year YYYY
+    end_yr (string): ending year YYYY
+    
+    Example:
+    python Code/atree/scripts/rainfall/IMDHistoricalTif2Daily.py rain 2018 2019
+    
+    Output:
+    individual daily tif imagery at {Home Dir}/Data/imd/rain/tif/{year}/YYYYMMDD.tif
+    """
     var_type = sys.argv[1]
     start_yr = int(sys.argv[2])
     end_yr = int(sys.argv[3])

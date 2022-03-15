@@ -1,13 +1,22 @@
-# credits Qiusheng Wu : https://groups.google.com/g/google-earth-engine-developers/c/h5PZOmU_dfw/m/50MMDvOVAwAJ
-
+"""
+uploads the tif images from the Google Cloud Platform to GEE Assets
+"""
 import os,sys
-from datetime import date,datetime,timedelta,timezone
-import time
+from datetime import datetime,timezone
 from subprocess import check_output
-import re
+# credits Qiusheng Wu : https://groups.google.com/g/google-earth-engine-developers/c/h5PZOmU_dfw/m/50MMDvOVAwAJ
 
 def main():
     """uploads images from GCP to GEE Assets in batch
+
+    Args:
+    year (string): year of the tif images (YYYY)
+    bucketname (string): name of the Google Cloud Platform bucket
+    geeuser (string): Google Earth Engine UserName
+    geecoll (string): 
+    
+    Output:
+    Google Earth Engine Assets
     """
     year = sys.argv[1]
     bucketname = sys.argv[2]
