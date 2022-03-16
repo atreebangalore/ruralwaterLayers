@@ -13,13 +13,13 @@ def get_params(states_str,dataset='consolidated'):
         path = rootFol.joinpath("data","groundwater","cgwb_stationwise_historical","CGWB_original.csv")
         metacols = ["SNO","STATE","DISTRICT","SITE_TYPE","WLCODE","LON","LAT"]
     elif step=="elevations":
-        path = rootFol.joinpath("outputs","groundwater","levels","preprocessed",states_str+"_processed.csv")
+        path = rootFol.joinpath("Code","atree","outputs","groundwater","levels","preprocessed",states_str+"_processed.csv")
         metacols = ["SNO","STATE","DISTRICT","SITE_TYPE","WLCODE","LON","LAT"]
     elif step=="rechargedischarge":
-        path = rootFol.joinpath("outputs","groundwater","levels","preprocessed",states_str+"_processed.csv")
+        path = rootFol.joinpath("Code","atree","outputs","groundwater","levels","preprocessed",states_str+"_processed.csv")
         metacols = ["SNO","STATE","DISTRICT","SITE_TYPE","WLCODE","LON","LAT"]
     elif step=="rasterize":
-        path = rootFol.joinpath("outputs","groundwater","levels","preprocessed",states_str+"_processed.csv")
+        path = rootFol.joinpath("Code","atree","outputs","groundwater","levels","preprocessed",states_str+"_processed.csv")
         metacols = ["SNO","STATE","DISTRICT","SITE_TYPE","WLCODE","LON","LAT"]
     else:
         raise Exception("dataset must be either 'preprocess' or 'elevations'")
