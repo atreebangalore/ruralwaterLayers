@@ -4,9 +4,9 @@ reads in a pre-processed groundwater layer (SHP) from STEP 1 and returns elevati
 depth-to-water (above MSL) for each
 
 Typical usage (terminal)
-$ python layers/groundwater/levels/gw_elevations.py [ST]    [KA,MH]  # WON'T WORK FOR FULL COUNTRY BECAUSE OF GEE LIMIT
-check outputs folder "outputs/groundwater/csv" and "outputs/groundwater/shapefiles"
-
+$ python layers/groundwater/levels/gw_elevations.py [ST]
+[ST] = [KA,MH]  # WON'T WORK FOR FULL COUNTRY BECAUSE OF GEE LIMIT
+check outputs folder "{Home Dir}/Code/atree/outputs/groundwater/levels/preprocessed"
 """
 
 import sys
@@ -16,23 +16,26 @@ root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
 sys.path += [str(root),str(config)]
 opPath = root.joinpath("Code","atree","outputs","groundwater","levels","preprocessed")
-print("data saved in :",opPath)
+# print("data saved in :",opPath)
 
 import gw_utils as gwmod
-import config.groundwater as gwcfg
-import numpy as np
+import groundwater as gwcfg
 import pandas as pd
-import geopandas as gpd
 import logging
 
 def main():
-    """reads in a pre-processed groundwater layer (SHP) and returns elevations of depth-to-water (above MSL) for each 
+    """reads in a pre-processed groundwater layer (SHP) and 
+    returns elevations of depth-to-water (above MSL) as csv and shp
     
     Args:
         state(str): states or [list,of,states] for which well elevations must be obtained
-        
+    
+    Example:
+    python Code/atree/scripts/groundwater/levels/2_gw_elevations.py KA,MH
+    
     Returns:
-        None: well elevations with locations stored in CSV as SHP
+        None: well elevations with locations as CSV and SHP at
+        {Home Dir}/Code/atree/outputs/groundwater/levels/preprocessed
     
     """
     states = sys.argv[1].replace("[","").replace("]","").split(",")    # [KA,MH] (str) -> [KA,MH] (list) 
