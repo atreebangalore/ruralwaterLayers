@@ -1,10 +1,13 @@
-"""STEP 3: gw_RechargeDischarge computes recharge discharge for a point shape file of well locations
+"""STEP 3: gw_RechargeDischarge computes recharge discharge for 
+a point shape file of well locations
 
-reads in a pre-processed groundwater layer (STEP 1 o/p) (CSV) and returns monsoon recharge, non-monsoon discharge for all years
+reads in a pre-processed groundwater layer (STEP 1 o/p) (CSV) 
+and returns monsoon recharge, non-monsoon discharge for all years
 
 Typical usage (in terminal from root directory)
-$ python layers/groundwater/levels/3_gw_rechargedischarge.py [ST]    #[KA,TN]
-check outputs folder "outputs/groundwater/tif"
+$ python layers/groundwater/levels/3_gw_rechargedischarge.py [ST]
+[ST] = [KA,TN]
+check outputs folder "{Home Dir}/Code/atree/outputs/groundwater/levels/preprocessed"
 
 """
 
@@ -15,23 +18,26 @@ root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
 sys.path += [str(root),str(config)]
 opPath = root.joinpath("Code","atree","outputs","groundwater","levels","preprocessed")
-print("data saved in :",opPath)
+# print("data saved in :",opPath)
 
 import gw_utils as gwmod
-import config.groundwater as gwcfg
-import numpy as np
+import groundwater as gwcfg
 import pandas as pd
-import geopandas as gpd
 import logging
 
 def main():
-    """reads in a pre-processed groundwater layer, with depth to water (above MSL) (CSV) and returns monsoon recharge, non-monsoon discharge 
+    """reads in a pre-processed groundwater layer, with depth to water (above MSL) (CSV)
+    and returns monsoon recharge, non-monsoon discharge 
     
     Args:
         state(str): states or [list,of,states] for which well elevations must be obtained
-        
+    
+    Example:
+    python Code/atree/scripts/groundwater/levels/3_gw_rechargedischarge.py KA,MH
+    
     Returns:
-        None: well recharge,discharge with locations stored in CSV as SHP
+        None: well recharge & discharge with locations stored in CSV and SHP at
+        {Home Dir}/Code/atree/outputs/groundwater/levels/preprocessed
     
     """
     states = sys.argv[1].replace("[","").replace("]","").split(",")    # [KA,MH] (str) -> [KA,MH] (list) 

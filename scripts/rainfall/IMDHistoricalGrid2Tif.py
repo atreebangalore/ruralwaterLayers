@@ -1,10 +1,12 @@
+"""
+Conversion of grd data aquired from IMD for Precipitation or
+Min Temp or Max Temp into tif imagery
+"""
 import sys
-import os
 from pathlib import Path
 import imdlib as imd
 import calendar
 import rasterio
-from rasterio.transform import Affine
 import numpy as np
 import tif
 
@@ -13,6 +15,15 @@ params = tif.get_params()
 
 
 def read_convert_write(year, input_folder, var_type, output_filepath):
+    """Function splits every day data in gridded format into 
+    bands of tif imagery using the imdlib module
+
+    Args:
+        year (integer): year of the IMD grd data
+        input_folder (string): location of grd data
+        var_type (string): rain or tmin or tmax
+        output_filepath (string): location for output tif imagery
+    """
     file_format = 'yearwise'
     
     data = imd.open_data(var_type, year, year, file_format, input_folder)
@@ -48,6 +59,12 @@ def main():
         var_type:str, either 'rain','tmax' or 'tmin'
         start_yr:int, for rain, between 1901 and 2020, for tmax/tmin, between 1951 and 2020
         end_yr:int, for rain, between 1901 and 2020, for tmax/tmin, between 1951 and 2020
+    
+    Example:
+    python Code/atree/scripts/rainfall/IMDHistoricalGrid2Tif.py rain 2018 2019
+    
+    Output:
+    {Home Dir}/Data/imd (respective folders for grd and tif)
     """
     var_type = sys.argv[1]        #('rain','tmax' or 'tmin') 
     start_yr = int(sys.argv[2])  #must be yyyy
@@ -67,7 +84,7 @@ def main():
 #         print(input_filepath,grd_filepath,tif_filepath)
         
         read_convert_write(year, str(dataFol), var_type, tif_filepath)    # Path must be str because imdlib needs str
-    
+        # move grd data into respective grd directory
         if tif_filepath.exists():
             print(input_file + " > " + output_file + " successful")
             if not grd_filepath.parent.exists():

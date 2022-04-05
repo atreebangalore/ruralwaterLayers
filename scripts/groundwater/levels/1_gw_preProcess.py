@@ -6,8 +6,9 @@ preprocesses file
 saves single state / whole country to csv and shp in outputs/groundwater/levels/preprocessed
 
 Typical usage (in terminal from root directory)
-$ python layers/groundwater/levels/gw_preProcess.py [KA,MH]
-check outputs folder "outputs/groundwater/levels/" 
+$ python Code/atree/scripts/groundwater/levels/1_gw_preProcess.py [ST]
+ST - two letter abbreviated State Names seperated by comma.
+check outputs folder "Code/atree/outputs/groundwater/levels/preprocessed/" 
 
 """
 
@@ -18,7 +19,7 @@ root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
 sys.path += [str(root),str(config)]
 opPath = root.joinpath("Code","atree","outputs","groundwater","levels","preprocessed")
-print("data saved in :",opPath)
+# print("data saved in :",opPath)
 
 import gw_utils
 import groundwater as gw_config
@@ -34,19 +35,25 @@ def main():
     Args:
         state (str): two letter short names for a state to be subsetted, or IN for whole country
         
+    Example:
+    python Code/atree/scripts/groundwater/levels/1_gw_preProcess.py KA,MH
+    
     Returns:
         None: preprocessed data saved to outputs folder
+        {Home Dir}/Code/atree/outputs/groundwater/levels/preprocessed/
     """
     states = sys.argv[1].replace("[","").replace("]","").split(",")    # [KA,MH] (str) -> [KA,MH] (list) 
     states_str = "_".join(states)    # KA_MH
 
+    opPath.mkdir(parents=True,exist_ok=True)
     metaPath = opPath.joinpath(states_str+"_metadata.log")
+    metaPath.touch(exist_ok=True)
     
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %I:%M:%S %p',
                         handlers=[logging.FileHandler(str(metaPath))],
-                       )
+                        )
     logging.info("preProcessing dataset for '%s' ",states_str)
     
     # get path of data file and cols to extract
@@ -64,13 +71,15 @@ def main():
     # Remove Duplicates (entire row)  ,Remove Null Data Rows,  Drop Duplicate geometries
     num_dups,num_nulls,num_geom_dups = gwObj.pre_process()
     logging.info("number of duplicates found & dropped: %d \
-                 number of nulls found & dropped: %d \
-                 number of duplicate geometries found & dropped: %d",num_dups,num_nulls,num_geom_dups)
+                number of nulls found & dropped: %d \
+                number of duplicate geometries found & dropped: %d",num_dups,num_nulls,num_geom_dups)
     
     # Save processed dataframe to CSV , SHP(without data) and SHP(with data) 
     dfPath = opPath.joinpath(states_str + '_processed' + path.suffix)
-    gdfPath = opPath.joinpath("shapefiles", (states_str + '_processed' + ".shp"))
-    gdfPathwData = opPath.joinpath("shapefiles", (states_str + '_processed_wData' + ".shp"))
+    shpPath = opPath.joinpath("shapefiles")
+    shpPath.mkdir(parents=True,exist_ok=True)
+    gdfPath = shpPath.joinpath((states_str + '_processed' + ".shp"))
+    gdfPathwData = shpPath.joinpath((states_str + '_processed_wData' + ".shp"))
     
     gwObj.df.to_csv(dfPath,index=False)
     logging.info("saved df to CSV")
