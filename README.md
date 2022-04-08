@@ -115,6 +115,8 @@ Downloads IMD gridded data for precipitation or min temp or max temp (IMDHistori
 Upload of daily imagery to GEE can be done using IMDHistoricalGCP2GEE.py script.
 Summation of Daily imagery into "yearly" or "monthly" or "water yr" (IMDHistoricalDailySum.py).
 
+Calculate monthly Effective Precipitation (effPrecipitation.py) from the 
+Daily rainfall images of IMDHistoricalTif2Daily.py
 ## Usage
 ```
 python Code/atree/scripts/rainfall/IMDHistoricalGrid.py [type] [start_yr] [end_yr]
@@ -122,6 +124,7 @@ python Code/atree/scripts/rainfall/IMDHistoricalGrid2Tif.py [type] [start_yr] [e
 python Code/atree/scripts/rainfall/IMDHistoricalTif2Daily.py [type] [start_yr] [end_yr]
 python Code/atree/scripts/rainfall/IMDHistoricalGCP2GEE.py [year] [bucket] [user] [coll]
 python Code/atree/scripts/rainfall/IMDHistoricalDailySum.py [type] [start_yr] [end_yr] [period]
+python Code/atree/scripts/rainfall/effPrecipitation.py [start_yr] [end_yr]
 ```
 ## Args:
 type - rain or tmin or tmax
@@ -147,6 +150,7 @@ python Code/atree/scripts/rainfall/IMDHistoricalGrid.py rain 2018 2019
 python Code/atree/scripts/rainfall/IMDHistoricalGrid2Tif.py rain 2018 2019
 python Code/atree/scripts/rainfall/IMDHistoricalTif2Daily.py rain 2018 2019
 python Code/atree/scripts/rainfall/IMDHistoricalDailySum.py rain 2018 2019 wateryr
+python Code/atree/scripts/rainfall/effPrecipitation.py 2018 2019
 ```
 ## Output
 IMDHistoricalGrid.py - Gridded data stored in `{Home Dir}/Data/imd`
@@ -158,6 +162,8 @@ IMDHistoricalTif2Daily.py - `{Home Dir}/Data/imd/rain/tif/{year}/YYYYMMDD.tif`
 IMDHistoricalGCP2GEE.py - daily images uploaded to GEE Assets - Image Collection
 
 IMDHistoricalDailySum.py - `{Home Dir}/Data/imd/{type}/tif/period`
+
+effPrecipitation.py - `{Home Dir}/Data/imd/{var_type}/tif/eff_precipitation/monthly`
 
 # Groundwater
 ## levels
