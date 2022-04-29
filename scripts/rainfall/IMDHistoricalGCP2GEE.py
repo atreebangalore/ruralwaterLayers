@@ -1,5 +1,12 @@
 """
-uploads the tif images from the Google Cloud Platform to GEE Assets
+uploads the tif images from the Google Cloud Platform to GEE Assets for a specified 
+year.
+This script requires gsutil and earthengine cli to be installed, authenticated 
+and configured.
+Make sure the gsutil is configured with GCP bucket and has necessary permissions
+for the authenticated user or the GCP bucket should have public access
+and also earthengine cli should be authenticated with user having permissions to
+modify the GEE image collection
 """
 import os,sys
 from datetime import datetime,timezone
@@ -8,12 +15,22 @@ from subprocess import check_output
 
 def main():
     """uploads images from GCP to GEE Assets in batch
-
+    
+    Usage:
+    python Code/atree/scripts/rainfall/IMDHistoricalGCP2GEE.py [year] [bucketname] [geeuser] [geecoll] [contd]
+    
     Args:
     year (string): year of the tif images (YYYY)
     bucketname (string): name of the Google Cloud Platform bucket
     geeuser (string): Google Earth Engine UserName
-    geecoll (string): 
+    geecoll (string): Google Earth Engine Collection name
+    contd (string)(optional): Last uploaded Image name for continuation (YYYYMMDD)
+    
+    Info:
+    if the collection for geecoll is inside a folder, then the path should me
+    entered (GEEfolderName/GEEcollectionName)
+    contd - (optional) for continuation from the previously uploaded image in 
+    case of unaccounted inturruption during execution of script for a year.
     
     Output:
     Google Earth Engine Assets
@@ -52,7 +69,7 @@ def main():
         print("copying to GEE Image Collection: ", eename)
         ee_command = 'earthengine upload image --asset_id=' + eename + ' ' + tif + ' --nodata_value=-999' + ' --time_start=' + str(int(dt))
         print(ee_command)
-        output = check_output(ee_command)
+        output = check_output(ee_command, shell=True)
         print(output)
         
 if __name__=='__main__':
