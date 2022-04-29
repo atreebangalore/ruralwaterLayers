@@ -120,6 +120,7 @@ Daily rainfall images of IMDHistoricalTif2Daily.py
 
 Calculate mean Temperature (IMDHistoricalMeanTemp.py) both daily and monthly
 from the Daily max and min Temp images of IMDHistoricalTif2Daily.py
+
 ## Usage
 ```
 python Code/atree/scripts/rainfall/IMDHistoricalGrid.py [type] [start_yr] [end_yr]
@@ -171,6 +172,7 @@ IMDHistoricalDailySum.py - `{Home Dir}/Data/imd/{type}/tif/period`
 effPrecipitation.py - `{Home Dir}/Data/imd/{var_type}/tif/eff_precipitation/monthly`
 
 IMDHistoricalMeanTemp.py - `{Home Dir}/Data/imd/tmean`
+
 # Groundwater
 ## levels
 
