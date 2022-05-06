@@ -1,29 +1,116 @@
-﻿State,District,Year,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
-TN,Ariyalur,2018May-2019Apr,0,0,0,0,0,50,37.5,87.5,12.5,225,275,37.5
-TN,Coimbatore,2018May-2019Apr,0,0,0,25,150,100,125,150,62.5,162.5,62.5,12.5
-TN,Cuddalore,2018May-2019Apr,0,0,0,0,0,50,25,125,37.5,212.5,300,37.5
-TN,Dharmapuri,2018May-2019Apr,0,0,0,37.5,62.5,37.5,37.5,12.5,75,125,50,0
-TN,Dindigul,2018May-2019Apr,0,0,0,25,112.5,25,25,25,100,125,112.5,12.5
-TN,Erode,2018May-2019Apr,0,0,0,37.5,150,25,25,25,87.5,137.5,50,12.5
-TN,Karur,2018May-2019Apr,0,0,0,12.5,75,12.5,25,12.5,62.5,62.5,75,0
-TN,Krishnagiri,2018May-2019Apr,12.5,0,0,37.5,75,37.5,25,12.5,112.5,100,37.5,0
-TN,Nammakal,2018May-2019Apr,0,0,0,37.5,87.5,25,25,25,75,75,62.5,0
-TN,Nagapattinam,2018May-2019Apr,0,0,0,0,12.5,37.5,12.5,62.5,37.5,250,425,62.5
-TN,Nilgiris,2018May-2019Apr,0,0,50,62.5,87.5,175,237.5,225,87.5,350,50,25
-TN,Perambalur,2018May-2019Apr,12.5,0,37.5,12.5,37.5,25,50,75,50,137.5,512.5,87.5
-TN,Pudukottai,2018May-2019Apr,12.5,0,12.5,62.5,0,37.5,62.5,137.5,50,187.5,437.5,75
-TN,Salem,2018May-2019Apr,0,0,25,37.5,137.5,50,87.5,250,75,175,262.5,25
-TN,Thanjavur,2018May-2019Apr,25,0,62.5,62.5,12.5,25,37.5,112.5,50,200,725,137.5
-TN,Tiruvarur,2018May-2019Apr,50,0,125,100,25,25,25,125,25,287.5,725,150
-TN,Tiruchirapalli,2018May-2019Apr,12.5,0,0,12.5,37.5,12.5,62.5,62.5,50,137.5,412.5,62.5
-TN,Tiruppur,2018May-2019Apr,0,0,0,12.5,125,12.5,25,37.5,75,137.5,75,0
-KAR,Banglore Rural,2018May-2019Apr,0,37.5,0,37.5,150,87.5,37.5,62.5,100,87.5,12.5,12.5
-KAR,Bangalore Urban,2018May-2019Apr,0,50,0,62.5,162.5,62.5,37.5,75,112.5,75,12.5,12.5
-KAR,Camarajnagar,2018May-2019Apr,0,0,0,37.5,125,50,37.5,50,100,125,25,0
-KAR,Chikmagalur,2018May-2019Apr,0,12.5,12.5,37.5,250,300,337.5,325,112.5,100,25,0
-KAR,Hassan,2018May-2019Apr,0,12.5,12.5,62.5,287.5,225,175,187.5,175,137.5,25,0
-KAR,Kodagu,2018May-2019Apr,0,12.5,12.5,100,312.5,437.5,712.5,700,125,162.5,12.5,12.5
-KAR,Mandya,2018May-2019Apr,0,0,0,37.5,250,112.5,187.5,112.5,162.5,125,25,0
-KAR,Mysore,2018May-2019Apr,0,12.5,0,62.5,250,137.5,150,150,87.5,162.5,25,0
-KAR,Ramnagara ,2018May-2019Apr,12.5,12.5,0,50,150,62.5,25,75,125,75,12.5,0
-KAR,Tumkur,2018May-2019Apr,0,12.5,0,37.5,125,100,50,62.5,100,100,25,0
+﻿State,District_N,District Name,Field4,Field5,District Code,ST_NM,DISTRICT,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec
+Delhi,East,EAST,,EAST,93,NCT of Delhi,East,25,25,0,0,25,25,150,62.5,100,0,0,0
+Delhi,North,NORTH,,NORTH,91,NCT of Delhi,North,25,25,0,0,25,25,150,62.5,100,0,0,0
+Delhi,North East,North East,,North East,92,NCT of Delhi,North East,25,25,0,0,25,25,150,62.5,100,0,0,0
+Delhi,North West,NORTH WEST,,NORTH WEST,90,NCT of Delhi,North West,37.5,37.5,12.5,12.5,12.5,50,250,187.5,187.5,0,0,0
+Delhi,South,SOUTH,,SOUTH,98,NCT of Delhi,South,37.5,25,12.5,0,25,50,150,37.5,125,0,0,0
+Haryana,Faridabad,FARIDABAD,,FARIDABAD,88,Haryana,Faridabad,37.5,25,12.5,0,25,50,150,37.5,125,0,0,0
+Haryana,Gurgaon,GURGAON,,GURGAON,86,Haryana,Gurgaon,25,12.5,12.5,12.5,12.5,75,150,125,100,0,0,0
+Haryana,Karnal,KARNAL,,KARNAL,74,Haryana,Karnal,25,25,12.5,0,12.5,87.5,350,137.5,225,0,0,0
+Haryana,Mewat,MEWAT,,MEWAT,87,Haryana,Mewat,12.5,12.5,0,12.5,12.5,87.5,175,50,87.5,0,0,0
+Haryana,Palwal,PALWAL,,PALWAL,89,Haryana,Palwal,12.5,12.5,12.5,12.5,0,62.5,150,62.5,62.5,0,0,0
+Haryana,Panipat,PANIPAT,,PANIPAT,75,Haryana,Panipat,12.5,25,0,0,12.5,25,225,75,125,0,0,0
+Haryana,Sonipat,SONIPAT,,SONIPAT,76,Haryana,Sonipat,12.5,25,0,0,12.5,37.5,225,87.5,162.5,0,0,0
+Haryana,Yamunanagar,YAMUNANAGAR,,YAMUNANAGAR,71,Haryana,Yamunanagar,25,87.5,25,37.5,12.5,125,450,300,200,25,12.5,0
+Himachal Pradesh,Shimla,SHIMLA,,SHIMLA,33,Himachal Pradesh,Shimla,87.5,150,50,37.5,62.5,87.5,250,150,200,12.5,37.5,0
+Himachal Pradesh,Sirmaur,SIRMAUR,,SIRMAUR,32,Himachal Pradesh,Sirmaur,75,150,37.5,50,37.5,150,450,250,250,0,12.5,12.5
+Himachal Pradesh,Solan,SOLAN,,SOLAN,31,Himachal Pradesh,Solan,62.5,150,62.5,25,50,150,275,250,250,12.5,37.5,12.5
+Madhya Pradesh,Ashoknagar,Ashoknagar,,Ashoknagar,459,Madhya Pradesh,Ashoknagar,0,12.5,0,12.5,0,75,250,275,275,0,0,0
+Madhya Pradesh,Bhind,BHIND,,BHIND,421,Madhya Pradesh,Bhind,0,25,0,0,0,50,425,150,175,0,0,0
+Madhya Pradesh,Bhopal,BHOPAL,,BHOPAL,425,Madhya Pradesh,Bhopal,0,0,0,12.5,0,125,350,250,100,12.5,0,0
+Madhya Pradesh,Chhatarpur,CHHATARPUR,,CHHATARPUR,427,Madhya Pradesh,Chhatarpur,0,0,0,12.5,0,62.5,375,250,187.5,0,0,0
+Madhya Pradesh,Damoh,DAMOH,,DAMOH,428,Madhya Pradesh,Damoh,0,0,0,12.5,0,100,350,300,150,0,0,0
+Madhya Pradesh,Datia,DATIA,,DATIA,429,Madhya Pradesh,Datia,0,25,0,0,0,62.5,450,187.5,225,0,0,0
+Madhya Pradesh,Dewas,DEWAS,,DEWAS,430,Madhya Pradesh,Dewas,0,0,0,0,0,225,200,150,87.5,0,0,0
+Madhya Pradesh,Dhar,DHAR,,DHAR,431,Madhya Pradesh,Dhar,0,0,0,0,0,150,200,225,150,0,0,0
+Madhya Pradesh,Guna,GUNA,,GUNA,433,Madhya Pradesh,Guna,0,0,0,12.5,0,100,350,275,225,0,0,0
+Madhya Pradesh,Gwalior,GWALIOR,,GWALIOR,434,Madhya Pradesh,Gwalior,0,25,0,12.5,12.5,75,300,275,200,0,0,0
+Madhya Pradesh,Indore,INDORE,,INDORE,435,Madhya Pradesh,Indore,0,0,0,0,0,225,225,175,125,0,0,0
+Madhya Pradesh,Katni,KATNI,,KATNI,438,Madhya Pradesh,Katni,12.5,12.5,25,0,0,87.5,325,250,150,0,0,0
+Madhya Pradesh,Mandsaur,MANDSAUR,,MANDSAUR,443,Madhya Pradesh,Mandsaur,0,0,0,25,0,137.5,250,250,187.5,0,0,0
+Madhya Pradesh,Morena,MORENA,,MORENA,446,Madhya Pradesh,Morena,12.5,12.5,0,12.5,0,87.5,325,200,175,0,0,0
+Madhya Pradesh,Neemuch,NEEMUCH,,NEEMUCH,452,Madhya Pradesh,Neemuch,0,0,0,25,0,112.5,250,275,175,0,0,0
+Madhya Pradesh,Panna,PANNA,,PANNA,454,Madhya Pradesh,Panna,12.5,12.5,0,0,0,75,350,250,150,0,0,0
+Madhya Pradesh,Raisen,RAISEN,,RAISEN,461,Madhya Pradesh,Raisen,0,12.5,0,12.5,0,187.5,425,250,150,0,0,0
+Madhya Pradesh,Rajgarh,RAJGARH,,RAJGARH,460,Madhya Pradesh,Rajgarh,0,0,0,12.5,0,137.5,300,175,162.5,0,0,0
+Madhya Pradesh,Ratlam,RATLAM,,RATLAM,463,Madhya Pradesh,Ratlam,0,0,0,12.5,0,175,225,250,187.5,0,0,0
+Madhya Pradesh,Sagar,SAGAR,,SAGAR,422,Madhya Pradesh,Sagar,0,0,0,12.5,0,112.5,300,275,162.5,0,0,0
+Madhya Pradesh,Satna,SATNA,,SATNA,423,Madhya Pradesh,Satna,12.5,12.5,12.5,0,0,50,250,350,125,0,0,0
+Madhya Pradesh,Sehore,SEHORE,,SEHORE,424,Madhya Pradesh,Sehore,0,0,0,0,0,187.5,350,200,100,0,0,0
+Madhya Pradesh,Shajapur,SHAJAPUR,,SHAJAPUR,437,Madhya Pradesh,Shajapur,0,0,0,12.5,0,162.5,350,175,125,0,0,0
+Madhya Pradesh,Sheopur,SHEOPUR,,SHEOPUR,442,Madhya Pradesh,Sheopur,0,0,0,12.5,0,62.5,300,225,250,0,0,0
+Madhya Pradesh,Shivpuri,SHIVPURI,,SHIVPURI,444,Madhya Pradesh,Shivpuri,0,12.5,0,12.5,12.5,87.5,375,300,250,0,0,0
+Madhya Pradesh,Tikamgarh,TIKAMGARH,,TIKAMGARH,453,Madhya Pradesh,Tikamgarh,0,12.5,0,0,12.5,75,325,212.5,250,0,0,0
+Madhya Pradesh,Ujjain,UJJAIN,,UJJAIN,458,Madhya Pradesh,Ujjain,0,0,0,0,0,187.5,250,187.5,137.5,12.5,0,0
+Madhya Pradesh,Vidisha,VIDISHA,,VIDISHA,462,Madhya Pradesh,Vidisha,0,0,0,12.5,0,137.5,325,250,200,0,0,0
+NCT of Delhi,Central,Central,,Central,95,NCT of Delhi,Central,25,25,0,0,25,25,150,62.5,100,0,0,0
+NCT of Delhi,New Delhi,New Delhi,,New Delhi,94,NCT of Delhi,New Delhi,37.5,25,12.5,0,25,50,150,37.5,125,0,0,0
+Rajasthan,Ajmer,AJMER,,AJMER,119,Rajasthan,Ajmer,12.5,0,0,12.5,0,62.5,125,112.5,100,0,0,0
+Rajasthan,Alwar,ALWAR,,ALWAR,104,Rajasthan,Alwar,12.5,0,0,12.5,0,100,175,137.5,112.5,0,0,0
+Rajasthan,Baran,BARAN,,BARAN,128,Rajasthan,Baran,0,0,0,37.5,0,62.5,375,200,275,0,0,0
+Rajasthan,Bharatpur,BHARATPUR,,BHARATPUR,105,Rajasthan,Bharatpur,25,12.5,0,25,12.5,87.5,325,200,175,0,0,0
+Rajasthan,Bhilwara,BHILWARA,,BHILWARA,122,Rajasthan,Bhilwara,12.5,0,0,12.5,0,87.5,225,137.5,137.5,0,0,0
+Rajasthan,Bundi,BUNDI,,BUNDI,121,Rajasthan,Bundi,0,0,0,12.5,0,75,200,187.5,187.5,0,0,0
+Rajasthan,Chittaurgarh,CHITTAURGARH,,CHITTAURGARH,126,Rajasthan,Chittaurgarh,0,0,0,25,0,100,275,187.5,175,0,0,0
+Rajasthan,Dhaulpur,DHAULPUR,,DHAULPUR,106,Rajasthan,Dhaulpur,37.5,12.5,0,12.5,0,75,275,200,150,0,0,0
+Rajasthan,Jaipur,JAIPUR,,JAIPUR,110,Rajasthan,Jaipur,12.5,0,0,12.5,0,75,175,125,112.5,0,0,0
+Rajasthan,Jhalawar,JHALAWAR,,JHALAWAR,129,Rajasthan,Jhalawar,0,0,0,25,0,125,375,200,200,0,0,0
+Rajasthan,Kota,KOTA,,KOTA,127,Rajasthan,Kota,0,0,0,37.5,0,62.5,300,200,200,0,0,0
+Rajasthan,Pratapgarh,PRATAPGARH,,PRATAPGARH,131,Rajasthan,Pratapgarh R,0,0,0,12.5,0,250,300,350,250,0,0,0
+Rajasthan,Rajsamand,RAJSAMAND,,RAJSAMAND,123,Rajasthan,Rajsamand,0,0,0,25,12.5,62.5,225,137.5,100,0,0,0
+Rajasthan,Tonk,TONK,,TONK,120,Rajasthan,Tonk,0,0,0,12.5,0,87.5,200,137.5,150,0,0,0
+Rajasthan,Udaipur,UDAIPUR,,UDAIPUR,130,Rajasthan,Udaipur,0,0,0,12.5,12.5,100,225,150,87.5,0,0,0
+Rajasthan,Dausa,DAUSA,,DAUSA,109,Rajasthan,Dausa,12.5,0,0,12.5,12.5,100,175,162.5,137.5,0,0,0
+Rajasthan,Karauli,KARAULI,,KARAULI,107,Rajasthan,Karauli,12.5,0,0,12.5,0,75,250,187.5,162.5,0,0,0
+Rajasthan,Sawai Madhopur,SAWAI MADHOPUR,,SAWAI MADHOPUR,108,Rajasthan,Sawai Madhopur,0,0,0,12.5,0,75,325,187.5,225,0,0,0
+Uttarakhand,Almora,Almora,,Almora,64,Uttarakhand,Almora,62.5,112.5,25,37.5,25,125,200,325,125,0,12.5,0
+Uttarakhand,Dehradun,Dehradun,,Dehradun,60,Uttarakhand,Dehradun,75,150,50,25,25,175,450,450,250,12.5,25,0
+Uttarakhand,Garhwal,Garhwal,,Garhwal,61,Uttarakhand,Garhwal,62.5,100,12.5,25,12.5,112.5,200,300,150,0,12.5,0
+Uttarakhand,Hardwar,Hardwar,,Hardwar,68,Uttarakhand,Hardwar,62.5,62.5,12.5,12.5,12.5,137.5,300,450,187.5,12.5,12.5,0
+Uttarakhand,Nainital,Nainital,,Nainital,66,Uttarakhand,Nainital,50,112.5,25,25,25,187.5,350,450,200,0,12.5,0
+Uttarakhand,Tehri Garhwal,Tehri Garhwal,,Tehri Garhwal,59,Uttarakhand,Tehri Garhwal,100,137.5,37.5,37.5,25,162.5,250,275,137.5,0,25,0
+Uttarakhand,Udham Singh Nagar,Udham Singh Nagar,,Udham Singh Nagar,67,Uttarakhand,Udham Singh Nagar,25,75,12.5,12.5,0,175,450,450,375,12.5,0,0
+Uttarakhand,Uttarkashi,Uttarkashi,,Uttarkashi,56,Uttarakhand,Uttarkashi,100,150,50,37.5,50,162.5,400,400,200,0,37.5,0
+UttarPradesh,Agra,AGRA,,AGRA,146,Uttar Pradesh,Agra,25,12.5,0,12.5,0,37.5,400,200,125,0,0,0
+UttarPradesh,Aligarh,ALIGARH,,ALIGARH,143,Uttar Pradesh,Aligarh,12.5,12.5,12.5,12.5,12.5,25,425,137.5,125,0,0,0
+UttarPradesh,Allahabad,ALLAHABAD,,ALLAHABAD,175,Uttar Pradesh,Allahabad,12.5,12.5,0,0,0,12.5,275,275,112.5,0,0,0
+UttarPradesh,Auraiya,AURAIYA,,AURAIYA,162,Uttar Pradesh,Auraiya,0,12.5,0,0,0,25,200,187.5,137.5,0,0,0
+UttarPradesh,Baghpat,BAGHPAT,,BAGHPAT,139,Uttar Pradesh,Baghpat,25,37.5,0,0,12.5,50,300,187.5,187.5,0,0,0
+UttarPradesh,Banda,BANDA,,BANDA,170,Uttar Pradesh,Banda,12.5,12.5,0,0,0,25,250,325,112.5,0,0,0
+UttarPradesh,Bareilly,BAREILLY,,BAREILLY,150,Uttar Pradesh,Bareilly,12.5,37.5,12.5,12.5,0,37.5,250,450,200,0,0,0
+UttarPradesh,Bijnor,BIJNOR,,BIJNOR,134,Uttar Pradesh,Bijnor,37.5,75,0,12.5,0,25,225,350,175,25,0,0
+UttarPradesh,Budaun,BUDAUN,,BUDAUN,149,Uttar Pradesh,Budaun,12.5,25,12.5,12.5,0,12.5,225,400,100,0,0,0
+UttarPradesh,Bulandshahr,Bulandshahr,,Bulandshahr,142,Uttar Pradesh,Bulandshahar,12.5,12.5,12.5,12.5,0,12.5,300,137.5,100,0,0,0
+UttarPradesh,Chitrakoot,CHITRAKOOT,,CHITRAKOOT,171,Uttar Pradesh,Chitrakoot,12.5,12.5,0,0,0,12.5,225,300,100,0,0,0
+UttarPradesh,Etah,ETAH,,ETAH,201,Uttar Pradesh,Etah,12.5,12.5,12.5,12.5,0,25,325,300,125,0,0,0
+UttarPradesh,Etawah,ETAWAH,,ETAWAH,161,Uttar Pradesh,Etawah,0,25,0,0,0,12.5,275,200,175,0,0,0
+UttarPradesh,Farrukhabad,FARRUKHABAD,,FARRUKHABAD,159,Uttar Pradesh,Farrukhabad,0,25,0,12.5,0,62.5,200,275,87.5,0,0,0
+UttarPradesh,Fatehpur,FATEHPUR,,FATEHPUR,172,Uttar Pradesh,Fatehpur,12.5,12.5,0,0,0,37.5,275,325,125,0,0,0
+UttarPradesh,Firozabad,FIROZABAD,,FIROZABAD,147,Uttar Pradesh,Firozabad,25,12.5,12.5,0,0,12.5,425,225,162.5,0,0,0
+UttarPradesh,Gautam Buddha Nagar,GAUTAM BUDDHA NAGAR,,GAUTAM BUDDHA NAGAR,141,Uttar Pradesh,Gautam Buddha Nagar,25,37.5,12.5,0,25,12.5,137.5,112.5,175,0,0,0
+UttarPradesh,Ghaziabad,GHAZIABAD,,GHAZIABAD,140,Uttar Pradesh,Ghaziabad,25,25,0,0,12.5,12.5,250,137.5,200,0,0,0
+UttarPradesh,Hamirpur,HAMIRPUR,,HAMIRPUR,168,Himachal Pradesh,Hamirpur,75,225,37.5,25,25,137.5,425,450,375,12.5,25,12.5
+UttarPradesh,Hardoi,HARDOI,,HARDOI,155,Uttar Pradesh,Hardoi,12.5,50,0,0,0,37.5,350,325,125,0,0,0
+UttarPradesh,Mahamaya Nagar,MAHAMAYA NAGAR,Hathras,Hathras,144,Uttar Pradesh,Mahamaya Nagar,12.5,12.5,12.5,0,12.5,12.5,450,275,125,0,0,0
+UttarPradesh,Jalaun,JALAUN,,JALAUN,165,Uttar Pradesh,Jalaun,0,12.5,0,0,0,50,275,162.5,125,0,0,0
+UttarPradesh,Jhansi,JHANSI,,JHANSI,166,Uttar Pradesh,Jhansi,0,12.5,0,12.5,0,75,275,175,200,0,0,0
+UttarPradesh,Jyotiba Phule Nagar,JYOTIBA PHULE NAGAR,Amroha,Amroha,137,Uttar Pradesh,Jyotiba Phule Nagar,12.5,25,0,12.5,0,12.5,300,300,175,12.5,0,0
+UttarPradesh,Kannauj,KANNAUJ,,KANNAUJ,160,Uttar Pradesh,Kannauj,12.5,50,0,0,0,50,300,425,225,0,0,0
+UttarPradesh,Kanpur Dehat,KANPUR DEHAT,,KANPUR DEHAT,163,Uttar Pradesh,Kanpur Dehat,12.5,12.5,0,0,0,37.5,225,300,112.5,0,0,0
+UttarPradesh,Kanpur Nagar,KANPUR NAGAR,,KANPUR NAGAR,164,Uttar Pradesh,Kanpur Nagar,12.5,12.5,0,0,0,37.5,275,325,112.5,0,0,0
+UttarPradesh,Kanshiram Nagar,Kanshiram Nagar,Kasganj,Kasganj,202,Uttar Pradesh,Kasganj,12.5,25,12.5,12.5,0,0,275,400,100,0,0,0
+UttarPradesh,Kaushambi,KAUSHAMBI,,KAUSHAMBI,174,Uttar Pradesh,Kaushambi,12.5,12.5,0,0,0,25,250,325,125,0,0,0
+UttarPradesh,Lalitpur,LALITPUR,,LALITPUR,167,Uttar Pradesh,Lalitpur,0,12.5,0,0,0,75,250,250,225,0,0,0
+UttarPradesh,Mahoba,MAHOBA,,MAHOBA,169,Uttar Pradesh,Mahoba,0,0,0,12.5,0,62.5,250,200,137.5,0,0,0
+UttarPradesh,Mainpuri,MAINPURI,,MAINPURI,148,Uttar Pradesh,Mainpuri,0,25,0,0,0,12.5,250,325,175,0,0,0
+UttarPradesh,Mathura,MATHURA,,MATHURA,145,Uttar Pradesh,Mathura,12.5,12.5,12.5,12.5,12.5,50,425,150,100,0,0,0
+UttarPradesh,Meerut,MEERUT,,MEERUT,138,Uttar Pradesh,Meerut,37.5,62.5,0,0,0,25,375,175,225,12.5,0,0
+UttarPradesh,Moradabad,MORADABAD,,MORADABAD,135,Uttar Pradesh,Moradabad,12.5,25,12.5,12.5,0,12.5,225,375,125,12.5,0,0
+UttarPradesh,Muzaffarnagar,MUZAFFARNAGAR,,MUZAFFARNAGAR,133,Uttar Pradesh,Muzaffarnagar,25,50,0,12.5,0,75,375,225,275,25,0,0
+UttarPradesh,Pilibhit,PILIBHIT,,PILIBHIT,151,Uttar Pradesh,Pilibhit,12.5,62.5,12.5,0,0,112.5,450,450,250,12.5,0,0
+UttarPradesh,Pratapgarh,PRATAPGARH,,PRATAPGARH,173,Uttar Pradesh,Pratapgarh,12.5,0,12.5,0,0,37.5,300,275,112.5,0,0,0
+UttarPradesh,Rae Bareli,RAE BARELI,,RAE BARELI,158,Uttar Pradesh,Rae Bareli,12.5,12.5,0,0,0,62.5,275,350,112.5,0,0,0
+UttarPradesh,Rampur,RAMPUR,,RAMPUR,136,Uttar Pradesh,Rampur,12.5,50,0,12.5,0,50,250,300,112.5,12.5,0,0
+UttarPradesh,Saharanpur,SAHARANPUR,,SAHARANPUR,132,Uttar Pradesh,Saharanpur,37.5,37.5,0,0,0,125,425,250,150,12.5,0,0
+UttarPradesh,Shahjahanpur,SHAHJAHANPUR,,SHAHJAHANPUR,152,Uttar Pradesh,Shahjahanpur,0,37.5,12.5,0,0,37.5,350,425,100,0,0,0
+UttarPradesh,Unnao,UNNAO,,UNNAO,156,Uttar Pradesh,Unnao,12.5,12.5,0,0,0,50,187.5,250,112.5,0,0,0
