@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 import imdlib as imd
 
-dataFol = Path.home().joinpath('Data','imd')  
+dataFol = Path.home().joinpath('Data','imd')
+dataFol.mkdir(parents=True, exist_ok=True)
 
 def main():
     """
