@@ -44,6 +44,7 @@ def meanCalcDaily(filePathList):
             sum = month
         else:
             sum += month
+        dataset.close()
     mean = sum/n
     return mean, out_meta
 

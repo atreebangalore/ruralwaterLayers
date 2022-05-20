@@ -119,6 +119,7 @@ def main():
     for month in range(12):
         pBand = np.copy(latBand)
         generateImage(pBand, month, latBand, out_meta)
+    image.close()
 
 
 if __name__ == "__main__":

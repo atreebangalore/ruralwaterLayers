@@ -45,6 +45,7 @@ def makeAnnualImage(matches,yr):
             sum = month
         else:
             sum += month
+        dataset.close()
     
     sum = np.where(sum==0,-32768,sum)
     #print(out_meta)
