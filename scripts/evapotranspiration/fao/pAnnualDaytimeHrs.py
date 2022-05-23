@@ -19,7 +19,7 @@ year = file_name[:4]
 
 # tmax or tmin tif file as source of reference
 source = Path.home().joinpath("Data", "imd", var_type, "tif", year, file_name)
-outPath = Path.home().joinpath("Data", "bottomUpET", "p_value")
+outPath = Path.home().joinpath("Data", "et", "fao", "p_value")
 outPath.mkdir(parents=True, exist_ok=True)  # create if not exist
 
 # p values for various latitude values (keys)
@@ -97,7 +97,7 @@ def main():
     referenced from the source IMD tif file
     
     Usage:
-        python Code\atree\scripts\bottomUpET\pAnnualDaytimeHrs.py [var_type] [filename]
+        python Code\atree\scripts\evapotranspiration\fao\pAnnualDaytimeHrs.py [var_type] [filename]
         
     Args:
         var_type: tmax or tmin 
@@ -105,11 +105,11 @@ def main():
         (this file will be used as reference for creating p value tif)
     
     Example:
-        python Code\atree\scripts\bottomUpET\pAnnualDaytimeHrs.py tmax 20150101.tif
+        python Code\atree\scripts\evapotranspiration\fao\pAnnualDaytimeHrs.py tmax 20150101.tif
     
     Output:
         monthly p value tif files are exported to
-        {Home Dir}\Data\bottomUpET\p_value\
+        {Home Dir}\Data\et\fao\p_value\
     """
     image = rasterio.open(source)
     data = image.read(1)
