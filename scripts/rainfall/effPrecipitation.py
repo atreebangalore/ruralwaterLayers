@@ -58,6 +58,7 @@ def summation(matches):
                 sum = month
             else:
                 sum += month
+            dataset.close()
     return sum, out_meta
 
 def saving(sum_tifpath, out_meta, sum):
