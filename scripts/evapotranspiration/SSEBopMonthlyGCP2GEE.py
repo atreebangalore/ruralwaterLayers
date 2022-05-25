@@ -62,7 +62,7 @@ def main():
         
     for tif in gs_tiffs:
         print("copying from GCP bucket: ",tif)
-        suffix = '_modisSSEBopETv4_actual_mm_india'
+        suffix = '_modisSSEBopETv5_actual_mm_india'
         fbname = tif.replace(bucket, '').replace('.tif', '') # get image name
         xDate = fbname.replace(suffix, '').replace('m', '') + '01'  # get YYYYMM01
         dt = datetime.strptime(xDate,"%Y%m%d").replace(tzinfo=timezone.utc).timestamp() * 1000    #.strftime("%Y-%m-%dT%H:%M:%S")

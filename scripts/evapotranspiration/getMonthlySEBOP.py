@@ -37,7 +37,7 @@ def main():
     year = sys.argv[1]
     month = sys.argv[2]
     
-    monthly_url = "https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/fews/web/global/monthly/eta/downloads/"
+    monthly_url = "https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/fews/web/global/monthly/etav5/downloads/"
     filename = "m" + str(year) + str(month) + ".zip"    # "m200306.zip"
     print(filename)
     exists = dataFol.joinpath(filename).exists()
