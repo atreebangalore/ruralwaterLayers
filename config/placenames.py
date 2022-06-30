@@ -1,3 +1,16 @@
+DT_names = {
+    'KA':{
+        'CHIK':['Chikbalapur','Chikballapur','Chikkaballapura],
+        'BELL':['Bellary','Ballari'],
+        'BANG':['Bengaluru','Bangalore'],
+        'CHIK':['Chikmagaluru','Chikmagalur'],
+        'DAKS':['Dakshin Kannad','Dakshina Kannada'],
+        
+               
+        
+    }
+}
+
 ST_names = {
     'AN':'Andaman & Nicobar Island',
     'AP':'Andhra Pradesh',
