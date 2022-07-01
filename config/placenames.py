@@ -2,13 +2,33 @@ DT_names = {
     'KA':{
         'CHIK':['Chikbalapur','Chikballapur','Chikkaballapura],
         'BELL':['Bellary','Ballari'],
-        'BANG':['Bengaluru','Bangalore'],
-        'CHIK':['Chikmagaluru','Chikmagalur'],
+        'BANG':['Bengaluru Urban','Bangalore','Bangalore Rural','Bangalore Urban],
+        'CHIK':['Chikkmagaluru','Chikmagalur'],
         'DAKS':['Dakshin Kannad','Dakshina Kannada'],
-        
-               
-        
-    }
+        'BELG':['Belgaum','Belagavi'], 
+        'GULB':['Kalaburagi','Gulbarga'],
+        'SHIV':['Shimoga','Shivamogga'],   
+        'BIJA':['Bijapur','Vijayapura']       
+         }
+    'MH':{
+        'AHMA':['Ahmednagar','Ahmadnagar'],
+        'BEED':['Bid','Bheed'],
+        'BHUL':['Buldana','Bhuldana'],
+        'RAIG':['Raigad','Raigarh'],
+        'MUMB':['Mumbai','Mumbai Suburban']
+         }
+    'TM':{ 
+        'CHEN'['Chengalpattu','Chinglepet'],
+        'KANC'['Kanchipuram','Kancheepuram'],
+        'KANY'['Kanyakumari','Kanniyakumari']
+         }
+    'AP':{
+        'KADA'['Ysr','Kadapa','Cuddapah']     
+         }
+    'GJ':{
+        'AHME':['Ahmedabad','Ahmadabad']
+         }
+                
 }
 
 ST_names = {
