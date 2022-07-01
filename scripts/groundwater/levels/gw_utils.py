@@ -1,6 +1,6 @@
-import os
-import sys
-import datetime
+# import os
+# import sys
+# import datetime
 from pathlib import Path
 import re
 
@@ -9,23 +9,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import geopandas as gpd
 from shapely.geometry import Point, LineString, Polygon
-import geopy
-import rasterio
-import xlrd
+# import geopy
+# import rasterio
+# import xlrd
 import json
 import ee
 
 ee.Initialize()
 
 class WellDataObj:
-    def __init__(self,path,metacols):
+    def __init__(self,path=None,metacols=None,dataFrame=None):
         self.path = path
         self.metacols = metacols + ['geometry'] #,'elevation'
         self.long = [elem for elem in self.metacols if re.search(r"lon",elem.lower()) != None][0]    # Get name of longitude column
         self.lat = [elem for elem in self.metacols if re.search(r"lat",elem.lower()) != None][0]    # Get name of latitude column
         self.stateCol = [elem for elem in self.metacols if re.search(r"state",elem.lower()) != None][0]    # Get name of state column
 
-        if path.suffix=='.csv':
+        if path is None and dataFrame is not None:
+            self.df = dataFrame
+            self.gdf = self.make_gdf_from_df()
+        elif path.suffix=='.csv':
             self.df = pd.read_csv(path) 
             self.gdf = self.make_gdf_from_df()
         elif path.suffix=='.xls':
@@ -43,7 +46,7 @@ class WellDataObj:
         self.gdf_diff = gpd.GeoDataFrame()
         
     def make_gdf_from_df(self):
-                
+        self.df.loc[:,[self.long,self.lat]]=self.df.loc[:,[self.long,self.lat]].replace('-',None)
         self.gdf = gpd.GeoDataFrame(self.df,
                               crs='EPSG:4326',
                               geometry=gpd.points_from_xy(self.df[self.long],self.df[self.lat])
