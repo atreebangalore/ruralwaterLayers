@@ -37,6 +37,17 @@ DT_names = {
         'RAEB'['Rae Bareli','Raebareli'],
         'SHRA'['Shrawasti','Shravasti']
          }
+    'WB':{
+        'COOC'['Coochbehar','Koch Bihar'],
+        'DARJ'['Darjeeling','Darjiling'],
+        'HOWR'['Howrah','Haora'],
+        'HOOG'['Hooghly','Hugli'],
+        'NORT'['North 24 Paraganas','North Twenty Four Parganas'],
+        'SOUT'['South 24 Paraganas','South Twenty Four Parganas'],
+        'PURU'['Puruliya','Purulia'],
+        
+    }
+   
                 
 }
 
