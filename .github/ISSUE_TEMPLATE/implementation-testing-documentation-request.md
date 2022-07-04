@@ -1,7 +1,7 @@
 ---
 name: Implementation/Testing/Documentation request
 about: A template for documenting implementation, testing, documentation requests
-title: "[Description of request]"
+title: "[Implementation/Testing/Documentation request]: _____"
 labels: ''
 assignees: ''
 
