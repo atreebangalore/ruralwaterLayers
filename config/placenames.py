@@ -1,3 +1,45 @@
+DT_names = {
+    'KA':{
+        'CHIK':['Chikbalapur','Chikballapur','Chikkaballapura'],
+        'BELL':['Bellary','Ballari'],
+        'BANG':['Bengaluru Urban','Bangalore','Bangalore Rural','Bangalore Urban'],
+        'CHIK':['Chikkmagaluru','Chikmagalur'],
+        'DAKS':['Dakshin Kannad','Dakshina Kannada'],
+        'BELG':['Belgaum','Belagavi'], 
+        'GULB':['Kalaburagi','Gulbarga'],
+        'SHIV':['Shimoga','Shivamogga'],   
+        'BIJA':['Bijapur','Vijayapura']       
+         }
+    'MH':{
+        'AHMA':['Ahmednagar','Ahmadnagar'],
+        'BEED':['Bid','Bheed'],
+        'BHUL':['Buldana','Bhuldana'],
+        'RAIG':['Raigad','Raigarh'],
+        'MUMB':['Mumbai','Mumbai Suburban']
+         }
+    'TM':{ 
+        'CHEN'['Chengalpattu','Chinglepet'],
+        'KANC'['Kanchipuram','Kancheepuram'],
+        'KANY'['Kanyakumari','Kanniyakumari']
+         }
+    'AP':{
+        'KADA'['Ysr','Kadapa','Cuddapah']     
+         }
+    'GJ':{
+        'AHME':['Ahmedabad','Ahmadabad']
+         }
+    'UP':{
+        'KASG'['Kasganj','Kanshiram Nagar'],
+        'KUSH'['Kushi Nagar','Kushinagar'],
+        'AMRO'['J.P.Nagar','Jyotiba Phule Nagar','Amroha'],
+        'BHAD'['Bhadohi','Sant Ravidas Nagar'],
+        'MAHA'['Maharajganj','Mahraganj']  
+        'RAEB'['Rae Bareli','Raebareli'],
+        'SHRA'['Shrawasti','Shravasti']
+         }
+                
+}
+
 ST_names = {
     'AN':'Andaman & Nicobar Island',
     'AP':'Andhra Pradesh',
