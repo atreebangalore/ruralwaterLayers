@@ -23,7 +23,8 @@ DT_names = {
         'KANY'['Kanyakumari','Kanniyakumari']
          }
     'AP':{
-        'KADA'['Ysr','Kadapa','Cuddapah']     
+        'KADA'['Ysr','Kadapa','Cuddapah'],
+        'NELL'['Nellore','Sri Potti Sriramulu Nellore']
          }
     'GJ':{
         'AHME':['Ahmedabad','Ahmadabad']
@@ -35,7 +36,8 @@ DT_names = {
         'BHAD'['Bhadohi','Sant Ravidas Nagar'],
         'MAHA'['Maharajganj','Mahraganj']  
         'RAEB'['Rae Bareli','Raebareli'],
-        'SHRA'['Shrawasti','Shravasti']
+        'SHRA'['Shrawasti','Shravasti'],
+        'SIDH'['Sidharthnagar','Sidharth Nagar']
          }
     'WB':{
         'COOC'['Coochbehar','Koch Bihar'],
@@ -45,8 +47,15 @@ DT_names = {
         'NORT'['North 24 Paraganas','North Twenty Four Parganas'],
         'SOUT'['South 24 Paraganas','South Twenty Four Parganas'],
         'PURU'['Puruliya','Purulia'],
+        }
+    'UT':{
+        'HARI'['Haridwar','Hardwar']
+         }
+    'TG':{
+        'MAHB'['Mahabubnagar','Mahaboobnagar','Mahbubnagar']
+         }
+    
         
-    }
    
                 
 }
