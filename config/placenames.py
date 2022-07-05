@@ -3,7 +3,7 @@ DT_names = {
         'CHIK': ['Chikbalapur', 'Chikballapur', 'Chikkaballapura'],
         'BELL': ['Bellary', 'Ballari'],
         'BANG': ['Bengaluru Urban', 'Bangalore', 'Bangalore Rural', 'Bangalore Urban'],
-        'CHIK': ['Chikkmagaluru', 'Chikmagalur'],
+        'CHIM': ['Chikkmagaluru', 'Chikmagalur'],
         'DAKS': ['Dakshin Kannad', 'Dakshina Kannada'],
         'BELG': ['Belgaum', 'Belagavi'],
         'GULB': ['Kalaburagi', 'Gulbarga'],
