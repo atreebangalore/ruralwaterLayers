@@ -17,7 +17,7 @@ DT_names = {
         'RAIG': ['Raigad', 'Raigarh'],
         'MUMB': ['Mumbai', 'Mumbai Suburban']
     },
-    'TM': {
+    'TN': {
         'CHEN': ['Chengalpattu', 'Chinglepet'],
         'KANC': ['Kanchipuram', 'Kancheepuram'],
         'KANY': ['Kanyakumari', 'Kanniyakumari']
