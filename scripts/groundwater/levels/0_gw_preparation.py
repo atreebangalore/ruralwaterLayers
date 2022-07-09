@@ -4,7 +4,7 @@ and after processing the file, merges the data with the historical csv file
 historical csv file:
 {Home Dir}/Code/atree/data/groundwater/cgwb_stationwise_historical/CGWB_original.csv
 Indiawris downloaded xls files:
-{Home Dir}/Code/atree/data/groundwater/downloaded_cgwb/
+{Home Dir}/Code/atree/data/groundwater/cgwb_stationwise_historical/downloaded_cgwb/
 
 Returns:
     Prepared csv file at
@@ -122,10 +122,10 @@ def main():
     historical csv file:
     {Home Dir}/Code/atree/data/groundwater/cgwb_stationwise_historical/CGWB_original.csv
     Indiawris downloaded xls files:
-    {Home Dir}/Code/atree/data/groundwater/downloaded_cgwb/
+    {Home Dir}/Code/atree/data/groundwater/cgwb_stationwise_historical/downloaded_cgwb/
 
     Usage:
-    python Code/atree/scripts/groundwater/level/0_gw_preparation.py
+    python Code\atree\scripts\groundwater\levels\0_gw_preparation.py
 
     Arguments:
     None
