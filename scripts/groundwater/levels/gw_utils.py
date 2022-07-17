@@ -42,11 +42,11 @@ class WellDataObj:
             print("file passed must be either csv or xls")
             pass
         self.dataCols = [elem for elem in list(self.df.columns) if re.search(r'\d+$', elem) is not None]   # Get data cols, i.e. all cols except metacols
-        print(self.dataCols)
+        print("from gw_utils WellDataObj init, Data Columns: ",self.dataCols)
         self.gdf_diff = gpd.GeoDataFrame()
         
     def make_gdf_from_df(self):
-        self.df.loc[:,[self.long,self.lat]]=self.df.loc[:,[self.long,self.lat]].replace('-',None)
+        self.df.loc[:,[self.long,self.lat]].replace('-',np.nan,inplace=True)
         self.gdf = gpd.GeoDataFrame(self.df,
                               crs='EPSG:4326',
                               geometry=gpd.points_from_xy(self.df[self.long],self.df[self.lat])
