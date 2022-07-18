@@ -1,34 +1,36 @@
-"""Script prepares CGWB data file from the downloaded Indiawris xls files
-and after processing the file
+"""Script prepares CGWB level 1 data file from the downloaded Indiawris xls files
+by cleaning and tidying them and saves in csv format.
 
 Indiawris downloaded xls files:
-{Home Dir}/Code/atree/data/groundwater/cgwb_stationwise_historical/downloaded_cgwb/
+{Home Dir}/Data/groundwater/levels/
 
 Returns:
     Prepared csv file at
-    {Home Dir}/Code/atree/data/groundwater/levels/level1/cgwb_all.csv
+    {Home Dir}/Code/atree/data/groundwater/levels/level1/CGWB_levels_level1.csv
     
 Improvements:
     #Efficient code: general regex rule for col name replacement
-    #tobediscussed: check_state_col function necessary?
+    #tobediscussed: check_state_col function necessary? - removed
 """
 
+import itertools
 import pandas as pd
 import numpy as np
 import sys
 from pathlib import Path
 
-root = Path.home()  # find project root
-dlPath = root.joinpath("Data","groundwater","levels")  # contains single file per state per year
-outPath = root.joinpath('Code', 'atree', 'data', 'groundwater','levels', 'level1')
+homeDir = Path.home()  # Home Directory
+dlPath = homeDir.joinpath("Data", "groundwater", "levels")
+outPath = homeDir.joinpath('Code', 'atree', 'data',
+                           'groundwater', 'levels', 'level1')
 outPath.mkdir(parents=True, exist_ok=True)
 
-config = root.joinpath("Code", "atree", "config")
-sys.path += [str(root), str(config)]
+config = homeDir.joinpath("Code", "atree", "config")
+sys.path += [str(homeDir), str(config)]
 
-from placenames import ST_names
-import gw_utils
 import groundwater as gw_config
+import gw_utils
+from placenames import ST_names
 
 def clean_excel(df):
     """Takes the raw Indiawris xls dataframe and turns it into a 'tidy dataframe' 
@@ -40,40 +42,22 @@ def clean_excel(df):
     Returns:
         dataframe: Tidy Indiawris xls dataframe
     """
-    idx = df[df.iloc[:,0].str.match('STATE').replace(np.nan,False)].index.values[0]
+    idx = df[df.iloc[:, 0].str.match('STATE').replace(
+        np.nan, False)].index.values[0]
     # headerColRow has col names like state, district, station, lat, long, station type
     headerColRow = df.iloc[idx]
     # dataColRow has col names of type 'Month YY'
     dataColRow = df.iloc[idx-1]
     dataColRow[dataColRow.isna()] = headerColRow[dataColRow.isna()]
-    dataColRow = dataColRow.str.replace("Latitude","LAT").replace("Longtitude","LON") 
+    dataColRow = dataColRow.str.replace(
+        "Latitude", "LAT").replace("Longtitude", "LON")
     # set new headings as column name
     df.rename(columns=dataColRow, inplace=True)
     df.drop(df.index[:idx+1], inplace=True)  # drop title and line below
     df.reset_index(drop=True, inplace=True)
     df.replace('-', np.nan, inplace=True)
-    print(df.info())
+    # print(df.info())
     return df
-
-
-def check_state_col(file, colHeadings, colSet):
-    """Checks whether the headings of all dataframes are similar so as to 
-    prevent error while concatenation
-
-    Args:
-        file (Path): path to the Indiawris xls file
-        colHeadings (set): column names to be checked with
-        colSet (set): column names of the current dataframe
-
-    Raises:
-        ValueError: if Column Headings doesnot match (not of same year)
-    """
-    if colHeadings:
-        if colSet.difference(colHeadings):
-            raise ValueError(f"{file}:Column Headings of downloaded files not \
-similar, do one time period at a time")
-    else:
-        colHeadings = colSet
 
 
 def processing(df, metacols):
@@ -88,7 +72,7 @@ def processing(df, metacols):
     """
     gwObj = gw_utils.WellDataObj(metacols=metacols, dataFrame=df)
     num_dups, num_nulls, num_geom_dups = gwObj.pre_process()
-    print("after gw_utils pre-processing, df shape is:",gwObj.df.shape)
+    print("after gw_utils pre-processing, df shape is:", gwObj.df.shape)
     return gwObj.df
 
 
@@ -118,9 +102,44 @@ def fixST(name):
     return next((k for k, v in ST_names.items() if v.upper() == name.upper()), name)
 
 
+def checkFresh(conc, df, metacols):
+    """Checks if the df to be merged already exists in conc or new
+
+    Args:
+        conc (DataFrame): Concatenated DataFrame
+        df (DataFrame): DataFrame of Individual State for a year
+        metacols (list): List of Constant Column Headings
+
+    Returns:
+        Boolean: True(new data) or False(already exists)
+    """
+    conc = conc.groupby(axis=1, level=0).sum()
+    cols = (col for col in df.columns if col not in metacols)
+    return all(all(df.at[i, c] == conc.at[i, c] for i in df.index) for c in cols)
+
+
+def revertChanges(conc, df, metacols):
+    """Revert back the unintended changes made to concatenated DataFrame
+
+    Args:
+        conc (DataFrame): Concatenated DataFrame
+        df (DataFrame): DataFrame of Individual State for a year
+        metacols (List): List of constant column headings
+
+    Returns:
+        DataFrame: Concatenated DataFrame with unintended changes reverted
+    """
+    for col, i in itertools.product(metacols, df.index):
+        conc.at[i, col] = df.at[i, col]
+    conc['STATE'] = conc['STATE'].apply(fixST)
+    conc.replace(0, np.nan, inplace=True)
+    return conc
+
+
 def main():
-    """script prepares raw xls of CGWB statewise groundwater levels data and concatenates into single csv file.
-    
+    """script prepares raw xls of CGWB statewise groundwater levels data and
+    concatenates into single csv file.
+
     Indiawris downloaded CGWB xls files:
     {Home Dir}/Data/groundwater/levels/
 
@@ -135,35 +154,35 @@ def main():
     {Home Dir}/Code/atree/data/groundwater/level1/CGWB_data.csv
     """
     files = [item for item in Path(dlPath).iterdir() if item.is_file()]
-    files = [f for f in files if (f.suffix==".xlsx" or f.suffix==".xls")]
-    files = [f for f in files if "LevelReport" in str(f)]
-    
-    conc = pd.DataFrame()  # empty DF to concat all states
-    colHeadings = set()
+    files = [f for f in files if f.suffix in [".xlsx", ".xls"]]
+    files = [f for f in files if "Level Report" in str(f)]
+    print('list of files acquired!')
+
     outFile = outPath.joinpath('CGWB_levels_level1.csv')
-    
+    if outFile.is_file():
+        conc = pd.read_csv(outFile)
+        conc = setIndex(conc)
+    else:
+        conc = pd.DataFrame()
+    mCols = ['STATE', 'DISTRICT', 'STATION', 'LAT', 'LON', 'Station Type']
+
     # read , clean and append each xls file to conc
-    for file in files[0:1]:
-        df = pd.read_excel(file,engine="openpyxl")
+    for file in files:
+        print(file)
+        df = pd.read_excel(file, engine="openpyxl")
         df = clean_excel(df)
-#         check_state_col(file, colHeadings, set(df.columns))
-        conc = conc.append(df)
-    
+        df = setIndex(df)
+        conc = pd.concat([conc, df], axis=1, ignore_index=False, sort=False)
+        # conc = conc.append(df)
+        if checkFresh(conc, df, mCols):
+            conc = conc.groupby(axis=1, level=0).sum()
+        else:
+            conc = conc.loc[:, ~conc.columns.duplicated()].copy()
+        conc = revertChanges(conc, df, mCols)
+
     # use gw_utils to pre-process (remove dups)
-    origMetacols = ["SNO", "STATE", "DISTRICT",
-                    "SITE_TYPE", "WLCODE", "LON", "LAT"]
-    dlMetacols = ['STATE', 'DISTRICT', 'STATION', 'LAT', 'LON', 'Station Type']
-    conc = processing(conc, dlMetacols)
-#     conc['STATE'] = conc['STATE'].apply(fixST)
-#     conc = setIndex(conc)
-    conc.to_csv(outFile,index=False)
-#     # read CGWB_data.csv if it exist or else read Historical csv
-#     csv = pd.read_csv(outFile) if outFile.is_file() else pd.read_csv(csvPath)
-#     csv = processing(csv, origMetacols)
-#     csv = setIndex(csv)
-#     result = pd.concat([csv, conc], ignore_index=True, sort=False)
-#     result.drop(['geometry'], axis=1, inplace=True)
-#     result.to_csv(outFile, index=False)
+    conc = processing(conc, mCols)
+    conc.to_csv(outFile, index=False)
 
 
 if __name__ == '__main__':
