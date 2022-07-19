@@ -130,7 +130,7 @@ def revertChanges(conc, df, metacols):
         DataFrame: Concatenated DataFrame with unintended changes reverted
     """
     for col, i in itertools.product(metacols, df.index):
-        conc.at[i, col] = df.at[i, col]
+        conc.loc[i, col] = df.loc[i, col]
     conc['STATE'] = conc['STATE'].apply(fixST)
     conc.replace(0, np.nan, inplace=True)
     return conc
@@ -151,7 +151,7 @@ def main():
 
     Output:
     Prepared csv file at
-    {Home Dir}/Code/atree/data/groundwater/level1/CGWB_data.csv
+    {Home Dir}/Code/atree/data/groundwater/levels/level1/CGWB_levels_level1.csv
     """
     files = [item for item in Path(dlPath).iterdir() if item.is_file()]
     files = [f for f in files if f.suffix in [".xlsx", ".xls"]]
@@ -171,18 +171,22 @@ def main():
         print(file)
         df = pd.read_excel(file, engine="openpyxl")
         df = clean_excel(df)
+        df = processing(df, mCols)
+        df.drop(['geometry'], axis=1, inplace=True)
         df = setIndex(df)
         conc = pd.concat([conc, df], axis=1, ignore_index=False, sort=False)
-        # conc = conc.append(df)
         if checkFresh(conc, df, mCols):
             conc = conc.groupby(axis=1, level=0).sum()
         else:
+            print(f'Reverting back, Part or Entire data of {file} already exist.')
             conc = conc.loc[:, ~conc.columns.duplicated()].copy()
         conc = revertChanges(conc, df, mCols)
 
     # use gw_utils to pre-process (remove dups)
     conc = processing(conc, mCols)
+    conc.drop(['geometry'], axis=1, inplace=True)
     conc.to_csv(outFile, index=False)
+    print(f'files merged to {outFile}')
 
 
 if __name__ == '__main__':
