@@ -28,7 +28,6 @@ outPath.mkdir(parents=True, exist_ok=True)
 config = homeDir.joinpath("Code", "atree", "config")
 sys.path += [str(homeDir), str(config)]
 
-import groundwater as gw_config
 import gw_utils
 from placenames import ST_names
 
@@ -49,6 +48,7 @@ def clean_excel(df):
     # dataColRow has col names of type 'Month YY'
     dataColRow = df.iloc[idx-1]
     dataColRow[dataColRow.isna()] = headerColRow[dataColRow.isna()]
+    dataColRow = dataColRow.str.strip()
     dataColRow = dataColRow.str.replace(
         "Latitude", "LAT").replace("Longtitude", "LON")
     # set new headings as column name
@@ -70,6 +70,8 @@ def processing(df, metacols):
     Returns:
         dataframe: preprocessed dataframe
     """
+    if set(metacols).difference(set(df.columns)):
+        raise AttributeError("Columns in DataFrame doesn't match metacols")
     gwObj = gw_utils.WellDataObj(metacols=metacols, dataFrame=df)
     num_dups, num_nulls, num_geom_dups = gwObj.pre_process()
     print("after gw_utils pre-processing, df shape is:", gwObj.df.shape)
@@ -88,18 +90,6 @@ def setIndex(df):
     df['latlon'] = df['LAT'].astype(str)+','+df['LON'].astype(str)
     df.set_index('latlon', inplace=True)
     return df
-
-
-def fixST(name):
-    """STATE Column values into two letter abbreviation
-
-    Args:
-        name (string): state name from the STATE column
-
-    Returns:
-        string: Two letter abbreviated state name
-    """
-    return next((k for k, v in ST_names.items() if v.upper() == name.upper()), name)
 
 
 def checkFresh(conc, df, metacols):
@@ -131,7 +121,10 @@ def revertChanges(conc, df, metacols):
     """
     for col, i in itertools.product(metacols, df.index):
         conc.loc[i, col] = df.loc[i, col]
-    conc['STATE'] = conc['STATE'].apply(fixST)
+    # Replace State Names with two letter abbreviation
+    conc['STATE'] = conc['STATE'].str.strip()
+    for k, v in ST_names.items():
+        conc['STATE'] = conc['STATE'].str.replace(v.upper(),k)
     conc.replace(0, np.nan, inplace=True)
     return conc
 
