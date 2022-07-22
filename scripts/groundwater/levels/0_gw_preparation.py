@@ -105,6 +105,7 @@ def checkFresh(conc, df, metacols):
     """
     conc = conc.groupby(axis=1, level=0).sum()
     cols = (col for col in df.columns if col not in metacols)
+    df.fillna(0.0, inplace=True)
     return all(all(df.at[i, c] == conc.at[i, c] for i in df.index) for c in cols)
 
 
