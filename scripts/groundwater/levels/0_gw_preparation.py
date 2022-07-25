@@ -168,6 +168,7 @@ def main():
         df = processing(df, mCols)
         df.drop(['geometry'], axis=1, inplace=True)
         df = setIndex(df)
+        df = df.loc[~df.index.duplicated(keep='first')]
         conc = pd.concat([conc, df], axis=1, ignore_index=False, sort=False)
         if checkFresh(conc, df, mCols):
             conc = conc.groupby(axis=1, level=0).sum()
