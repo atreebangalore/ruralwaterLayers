@@ -13,7 +13,6 @@ Improvements:
     #tobediscussed: check_state_col function necessary? - removed
 """
 
-import itertools
 import pandas as pd
 import numpy as np
 import sys
@@ -109,25 +108,40 @@ def checkFresh(conc, df, metacols):
     return all(all(df.at[i, c] == conc.at[i, c] for i in df.index) for c in cols)
 
 
-def revertChanges(conc, df, metacols):
-    """Revert back the unintended changes made to concatenated DataFrame
+def computation(conc, metacols):
+    """seperate conc into mCols and data DataFrame and Merge the duplicate 
+    monthly data cols and corrects unintended changes in mCols DataFrame.
 
     Args:
         conc (DataFrame): Concatenated DataFrame
-        df (DataFrame): DataFrame of Individual State for a year
         metacols (List): List of constant column headings
 
     Returns:
-        DataFrame: Concatenated DataFrame with unintended changes reverted
+        DataFrame: Concatenated DataFrame
     """
-    for col, i in itertools.product(metacols, df.index):
-        conc.loc[i, col] = df.loc[i, col]
+    # seperate conc into metacols DF and monthly data DF
+    mColsdf = conc.loc[:,metacols]
+    datadf = conc.loc[:,[c for c in conc.columns if c not in metacols]]
+    # merge the monthly data columns
+    datadf = datadf.groupby(axis=1, level=0).sum()
+    datadf.replace(0, np.nan, inplace=True)
+    if len(mColsdf.columns) != len(metacols):
+        # aggregate metacols as string by placing '-' inbetween
+        for col in metacols:
+            mColsdf[col] = mColsdf[col].astype(str).agg('-'.join, axis=1)
+        # remove the duplicate columns
+        mColsdf = mColsdf.loc[:, ~mColsdf.columns.duplicated()].copy()
+        # fix the values for unintended changes
+        for col in metacols:
+            mColsdf[col] = mColsdf[col].str.replace('nan-','').str.replace('-nan',
+                                    '').str.split('-').str[0]
+        # revert back LAT LON column as float values
+        mColsdf['LAT'] = mColsdf['LAT'].astype(float)
+        mColsdf['LON'] = mColsdf['LON'].astype(float)
     # Replace State Names with two letter abbreviation
-    conc['STATE'] = conc['STATE'].str.strip()
     for k, v in ST_names.items():
-        conc['STATE'] = conc['STATE'].str.replace(v.upper(),k)
-    conc.replace(0, np.nan, inplace=True)
-    return conc
+        mColsdf['STATE'] = mColsdf['STATE'].str.replace(v.upper(),k)
+    return pd.concat([mColsdf, datadf], axis=1, ignore_index=False, sort=False)
 
 
 def main():
@@ -172,13 +186,13 @@ def main():
         df.drop(['geometry'], axis=1, inplace=True)
         df = setIndex(df)
         df = df.loc[~df.index.duplicated(keep='first')]
+        df['STATE'] = df['STATE'].str.strip()
         conc = pd.concat([conc, df], axis=1, ignore_index=False, sort=False)
         if checkFresh(conc, df, mCols):
-            conc = conc.groupby(axis=1, level=0).sum()
+            conc = computation(conc, mCols)
         else:
             print(f'Reverting back, Part or Entire data of {file} already exist.')
             conc = conc.loc[:, ~conc.columns.duplicated()].copy()
-        conc = revertChanges(conc, df, mCols)
 
     # use gw_utils to pre-process (remove dups)
     conc = processing(conc, mCols)
