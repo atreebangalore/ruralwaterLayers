@@ -156,6 +156,7 @@ def main():
     if outFile.is_file():
         conc = pd.read_csv(outFile)
         conc = setIndex(conc)
+        conc = conc.loc[~conc.index.duplicated(keep='first')]
     else:
         conc = pd.DataFrame()
     mCols = ['STATE', 'DISTRICT', 'STATION', 'LAT', 'LON', 'Station Type']
@@ -166,6 +167,8 @@ def main():
         df = pd.read_excel(file, engine="openpyxl")
         df = clean_excel(df)
         df = processing(df, mCols)
+        if not list(df.index):
+            continue
         df.drop(['geometry'], axis=1, inplace=True)
         df = setIndex(df)
         df = df.loc[~df.index.duplicated(keep='first')]
