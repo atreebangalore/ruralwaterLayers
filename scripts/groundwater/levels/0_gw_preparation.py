@@ -135,9 +135,6 @@ def computation(conc, metacols):
         for col in metacols:
             mColsdf[col] = mColsdf[col].str.replace('nan@','').str.replace('@nan',
                                 '').str.split('@').str[0].str.replace('nan','')
-        # revert back LAT LON column as float values
-        mColsdf['LAT'] = mColsdf['LAT'].astype(float)
-        mColsdf['LON'] = mColsdf['LON'].astype(float)
     # Replace State Names with two letter abbreviation
     for k, v in ST_names.items():
         mColsdf['STATE'] = mColsdf['STATE'].str.replace(v.upper(),k)
