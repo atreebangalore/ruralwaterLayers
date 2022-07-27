@@ -126,15 +126,15 @@ def computation(conc, metacols):
     datadf = datadf.groupby(axis=1, level=0).sum()
     datadf.replace(0, np.nan, inplace=True)
     if len(mColsdf.columns) != len(metacols):
-        # aggregate metacols as string by placing '-' inbetween
+        # aggregate metacols as string by placing '@' as placeholder
         for col in metacols:
-            mColsdf[col] = mColsdf[col].astype(str).agg('-'.join, axis=1)
+            mColsdf[col] = mColsdf[col].astype(str).agg('@'.join, axis=1)
         # remove the duplicate columns
         mColsdf = mColsdf.loc[:, ~mColsdf.columns.duplicated()].copy()
         # fix the values for unintended changes
         for col in metacols:
-            mColsdf[col] = mColsdf[col].str.replace('nan-','').str.replace('-nan',
-                                    '').str.split('-').str[0]
+            mColsdf[col] = mColsdf[col].str.replace('nan@','').str.replace('@nan',
+                                '').str.split('@').str[0].str.replace('nan','')
         # revert back LAT LON column as float values
         mColsdf['LAT'] = mColsdf['LAT'].astype(float)
         mColsdf['LON'] = mColsdf['LON'].astype(float)
