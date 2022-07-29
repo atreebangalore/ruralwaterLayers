@@ -30,7 +30,7 @@ sys.path += [str(homeDir), str(config)]
 import gw_utils
 from placenames import ST_names
 
-def clean_excel(df):
+def clean_excel(df, mCols):
     """Takes the raw Indiawris xls dataframe and turns it into a 'tidy dataframe' 
     https://vita.had.co.nz/papers/tidy-data.pdf
 
@@ -50,6 +50,7 @@ def clean_excel(df):
     dataColRow = dataColRow.str.strip()
     dataColRow = dataColRow.str.replace(
         "Latitude", "LAT").replace("Longtitude", "LON")
+    dataColRow = dataColRow.apply(lambda x: f"Data {x}" if x not in mCols else x)
     # set new headings as column name
     df.rename(columns=dataColRow, inplace=True)
     df.drop(df.index[:idx+1], inplace=True)  # drop title and line below
@@ -176,7 +177,7 @@ def main():
     for file in files:
         print(file)
         df = pd.read_excel(file, engine="openpyxl")
-        df = clean_excel(df)
+        df = clean_excel(df, mCols)
         df = processing(df, mCols)
         if not list(df.index):
             continue
@@ -194,6 +195,7 @@ def main():
     # use gw_utils to pre-process (remove dups)
     conc = processing(conc, mCols)
     conc.drop(['geometry'], axis=1, inplace=True)
+    conc.dropna(how='all', axis=1, inplace=True)
     conc.to_csv(outFile, index=False)
     print(f'files merged to {outFile}')
 
