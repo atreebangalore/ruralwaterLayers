@@ -2,7 +2,8 @@
 reads in a pre-processed groundwater LEVELS layer (STEP 1 o/p) (CSV) and returns tif
 
 Typical usage (in terminal from root directory)
-$ python layers/groundwater/levels/gw_levels_rasterize.py [ST] [MONTH]  # MONTH e.g. may-96, nov-96
+$ python layers/groundwater/levels/gw_levels_rasterize.py [ST] [MONTH]
+MONTH where month should be first three letter of the month e.g. May,1996
 check outputs folder "outputs/groundwater/tif"
 
 REQUIRES THE python qgis module installed in current virtual environment
@@ -15,21 +16,13 @@ from pathlib import Path
 root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
 sys.path += [str(root),str(config)]
-opPath = root.joinpath("Code","atree","outputs","groundwater","levels","preprocessed")
-tifPath = root.joinpath("Code","atree","outputs","groundwater","levels","tif")
-print("data saved in :",opPath)
+opPath = root.joinpath("Code","atree","data","groundwater","levels","level2")
+tifPath = root.joinpath("Code","atree","data","groundwater","levels","tif")
+tifPath.mkdir(parents=True,exist_ok=True)
 
-import gw_utils
 import groundwater as gw_config
-import numpy as np
-import pandas as pd
 import logging
-
 from shapely.geometry import Point, LineString, Polygon
-import geopandas as gpd
-
-import geojson
-import json
 
 from qgis.core import (
     QgsApplication,
@@ -42,27 +35,30 @@ from qgis.core import (
 )
 from qgis.analysis import QgsNativeAlgorithms
 
-import rasterio
-import re
-import os
+import os, calendar
 
 def main():
-    """reads in a pre-processed groundwater layer, with recharge-discharge (CSV) and returns tif
+    """reads in a pre-processed groundwater data shp from 1_gw_preProcess
+    and returns tif
     
     Args:
-        state(str): state for which well elevations must be obtained
-        month(str): e.g. may-96, dec-96
+        state(str): two letter state abbreviation or IN for whole country
+        month(str): (three letter) MMM,YYYY e.g. May,2012 or Nov,2020
         
     Returns:
-        None: well elevations with locations stored in CSV as SHP
+        tif: shp point data to raster tif for the month provided
     
     """
     states = sys.argv[1].replace("[","").replace("]","").split(",")
     states_str = "_".join(states)
     
-    month = sys.argv[2]
+    monthArg = sys.argv[2].replace('[','').replace(']','').split(',')
+    month = f'{monthArg[0].capitalize()} {monthArg[1]}'
     
-    metaPath = opPath.joinpath(states_str+"_metadata.log")
+    monthDict = {name: f'{num:02d}' for num, name in enumerate(calendar.month_abbr) if num}
+    outMonth = f'{monthArg[1]}{monthDict[monthArg[0].capitalize()]}01'
+    
+    metaPath = opPath.joinpath(f"{states_str}_metadata.log")
     
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
@@ -105,13 +101,18 @@ def main():
     print(vLayer.selectedFeatureCount())
     
     # write subsetted layer to shapefile
-    subsetPath = opPath.joinpath("shapefiles_noNulls",states_str+"_"+month+"_noNulls.shp")
-    svOptions = QgsVectorFileWriter.SaveVectorOptions()
-    svOptions.driverName = "ESRI Shapefile"
-    svOptions.fileEncoding = "utf-8"
-    svOptions.onlySelectedFeatures = True
-#     _writer = QgsVectorFileWriter.writeAsVectorFormat(vLayer, str(subsetPath), vLayer.crs(),driverName= "ESRI Shapefile",onlySelectedFeatures=True)
-    _writer = QgsVectorFileWriter.writeAsVectorFormatV2(vLayer,str(subsetPath), QgsCoordinateTransformContext(), svOptions)
+    vPath = opPath.joinpath("shapefiles_noNulls")
+    vPath.mkdir(parents=True,exist_ok=True)
+    subsetPath = vPath.joinpath(states_str+"_"+month+"_noNulls.shp")
+    try:
+        svOptions = QgsVectorFileWriter.SaveVectorOptions()
+        svOptions.driverName = "ESRI Shapefile"
+        svOptions.fileEncoding = "utf-8"
+        svOptions.onlySelectedFeatures = True
+        _writer = QgsVectorFileWriter.writeAsVectorFormatV2(vLayer,str(subsetPath), QgsCoordinateTransformContext(), svOptions)
+    except:
+        # _writer = QgsVectorFileWriter.writeAsVectorFormat(vLayer, str(subsetPath), vLayer.crs(),driverName= "ESRI Shapefile",onlySelectedFeatures=True)
+        _writer = QgsVectorFileWriter.writeAsVectorFormat(vLayer, str(subsetPath), 'utf-8', vLayer.crs(), "ESRI Shapefile", True)
     
     # import subsetted layer
     subLayer = QgsVectorLayer(str(subsetPath), 'well_levels_layer_nonulls', 'ogr') 
@@ -124,7 +125,7 @@ def main():
     print(params)
     params['INPUT'] = subLayer
     params['Z_FIELD'] = month
-    params['OUTPUT'] = str(tifPath.joinpath(states_str+"_"+month+"_idw_grid_id_min_1_max_12_nonulls.tif"))
+    params['OUTPUT'] = str(tifPath.joinpath(states_str+"_"+outMonth+"_idw_grid_id_min_1_max_12_nonulls.tif"))
     
     # run processing algorithm
     res = processing.run(gridalg,params,feedback=feedback)
