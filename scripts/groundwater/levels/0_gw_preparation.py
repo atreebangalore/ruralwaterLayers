@@ -104,9 +104,10 @@ def checkFresh(conc, df, metacols):
         Boolean: True(new data) or False(already exists)
     """
     conc = conc.groupby(axis=1, level=0).sum()
-    cols = (col for col in df.columns if col not in metacols)
+    cols = (c for c in df.columns if c in conc.columns and c not in metacols)
     df.fillna(0.0, inplace=True)
-    return all(all(df.at[i, c] == conc.at[i, c] for i in df.index) for c in cols)
+    cix = (ix for ix in df.index if ix in conc.index)
+    return all(all(df.at[i, c] == conc.at[i, c] for i in cix) for c in cols)
 
 
 def computation(conc, metacols):
