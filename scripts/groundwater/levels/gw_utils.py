@@ -47,10 +47,19 @@ class WellDataObj:
         
     def make_gdf_from_df(self):
         self.df.loc[:,[self.long,self.lat]].replace('-',np.nan,inplace=True)
-        self.gdf = gpd.GeoDataFrame(self.df,
+        try:
+            self.gdf = gpd.GeoDataFrame(self.df,
                               crs='EPSG:4326',
                               geometry=gpd.points_from_xy(self.df[self.long],self.df[self.lat])
                                    )
+        except ValueError:
+            self.df[[self.long,self.lat]] = self.df[[self.long,self.lat]].apply(pd.to_numeric,errors='coerce')
+            self.gdf = gpd.GeoDataFrame(self.df,
+                              crs='EPSG:4326',
+                              geometry=gpd.points_from_xy(self.df[self.long],self.df[self.lat])
+                                   )
+        except Exception as e:
+            raise Exception(f'make_gdf_from_df method has an error: {e}')
         return self.gdf
     
     def subset_gdf(self,states=None):
