@@ -15,14 +15,16 @@ Improvements:
 
 import pandas as pd
 import numpy as np
-import sys
+import sys, logging
 from pathlib import Path
+from zipfile import BadZipFile
 
 homeDir = Path.home()  # Home Directory
 dlPath = homeDir.joinpath("Data", "groundwater", "levels")
 outPath = homeDir.joinpath('Code', 'atree', 'data',
                            'groundwater', 'levels', 'level1')
 outPath.mkdir(parents=True, exist_ok=True)
+logging.basicConfig(filename=outPath.joinpath('gw_preparation.log'), format='%(asctime)s %(levelname)s: %(message)s', filemode='w', level=logging.INFO)
 
 config = homeDir.joinpath("Code", "atree", "config")
 sys.path += [str(homeDir), str(config)]
@@ -125,8 +127,20 @@ def computation(conc, metacols):
     mColsdf = conc.loc[:,metacols]
     datadf = conc.loc[:,[c for c in conc.columns if c not in metacols]]
     # merge the monthly data columns
-    datadf = datadf.groupby(axis=1, level=0).sum()
-    datadf.replace(0, np.nan, inplace=True)
+    if len(datadf.columns) != len(set(datadf.columns)):
+        # aggregate metacols as string by placing '@' as placeholder
+        for col in set(datadf.columns):
+            if isinstance(datadf[col], pd.DataFrame):
+                datadf[col] = datadf[col].astype(str).agg('@'.join, axis=1)
+        # remove the duplicate columns
+        datadf = datadf.loc[:, ~datadf.columns.duplicated()].copy()
+        # fix the values for unintended changes
+        for col in set(datadf.columns):
+            datadf[col] = datadf[col].astype(str).str.replace('nan@','').str.replace('@nan',
+                                    '').str.split('@').str[0].str.replace('nan'
+                                    ,'')
+        datadf.replace('',np.nan,inplace=True)
+        datadf = datadf.astype(float)
     if len(mColsdf.columns) != len(metacols):
         # aggregate metacols as string by placing '@' as placeholder
         for col in metacols:
@@ -177,7 +191,11 @@ def main():
     # read , clean and append each xls file to conc
     for file in files:
         print(file)
-        df = pd.read_excel(file, engine="openpyxl")
+        try:
+            df = pd.read_excel(file, engine="openpyxl")
+        except BadZipFile:
+            logging.error(f'{file} caught in BadZipFile Exception.')
+            continue
         df = clean_excel(df, mCols)
         df = processing(df, mCols)
         if not list(df.index):
@@ -190,7 +208,7 @@ def main():
         if checkFresh(conc, df, mCols):
             conc = computation(conc, mCols)
         else:
-            print(f'Reverting back, Part or Entire data of {file} already exist.')
+            logging.info(f'Reverting back, Part or Entire data of {file} already exist.')
             conc = conc.loc[:, ~conc.columns.duplicated()].copy()
 
     # use gw_utils to pre-process (remove dups)
