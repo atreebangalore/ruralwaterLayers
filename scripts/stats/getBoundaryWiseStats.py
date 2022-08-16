@@ -51,7 +51,8 @@ def main():
     bws.set_export_vars()
     iColl_reduced = bws.temp_reduce_image_coll()
     stats = bws.get_boundarywisestats()
-#     print(stats.getInfo().keys())
+    print(stats.get(0).getInfo()['features'][0]['properties'])
+    print(stats.get(0).getInfo()['properties'])
     
 if __name__=="__main__":
     main()

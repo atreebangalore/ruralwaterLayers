@@ -120,20 +120,19 @@ class BoundaryWiseStats:
         #print(export_columns,export_folder)
         
     def get_boundarywisestats(self):
-        def 
         self.bws = self.iColl_reduced.map(
-            lambda ee.Image(image):
-            ee.Image(image).reduceRegions(
+            lambda image:
+                ee.Image(image).reduceRegions(
                 collection= self.boundaries,
                 reducer= self.spatialReducer,
                 scale= self.scale,
                 crs= self.proj
             ).set(
-                "year",ee.Date(image.get("system:time_start")).get('year'))
+                "year",ee.Date(ee.Image(image).get("system:time_start")).get('year'))
             .set(
-                "month",ee.Date(image.get("system:time_start")).get('month'))
+                "month",ee.Date(ee.Image(image).get("system:time_start")).get('month'))
         )
-        return bws
+        return self.bws
 
         
         
