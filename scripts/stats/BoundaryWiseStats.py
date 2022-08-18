@@ -1,8 +1,10 @@
+from calendar import month
 import os,sys
 from pathlib import Path
 import json
 import ee
 ee.Initialize()
+import pandas as pd
 
 root = Path.home() # find project root
 config = root.joinpath("Code","atree","config")
@@ -134,5 +136,18 @@ class BoundaryWiseStats:
         )
         return self.bws
 
-        
-        
+    def get_out_dict(self):
+        self.out_dict = {}
+        for period in range(self.bws.size().getInfo()):
+            month = self.bws.get(period).getInfo()
+            col = f"{month['properties']['year']}{month['properties']['month']:02d}"
+            self.out_dict[col] = {}
+            for feature in month['features']:
+                distr = feature['properties']['DISTRICT']
+                valu = feature['properties'][self.spatial_stat]
+                self.out_dict[col][distr] = valu
+
+    def export_csv(self, path):
+        df = pd.DataFrame(self.out_dict)
+        df.to_csv(path)
+        print(f"output: {str(path)}")
