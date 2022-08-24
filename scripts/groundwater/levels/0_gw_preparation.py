@@ -30,7 +30,7 @@ config = homeDir.joinpath("Code", "atree", "config")
 sys.path += [str(homeDir), str(config)]
 
 import gw_utils
-from placenames import ST_names
+from placenames import ST_list
 
 def clean_excel(df, mCols):
     """Takes the raw Indiawris xls dataframe and turns it into a 'tidy dataframe' 
@@ -152,8 +152,9 @@ def computation(conc, metacols):
             mColsdf[col] = mColsdf[col].str.replace('nan@','').str.replace('@nan',
                                 '').str.split('@').str[0].str.replace('nan','')
     # Replace State Names with two letter abbreviation
-    for k, v in ST_names.items():
-        mColsdf['STATE'] = mColsdf['STATE'].str.replace(v.upper(),k)
+    for k, v in ST_list.items():
+        for stname in v:
+            mColsdf['STATE'] = mColsdf['STATE'].str.replace(stname.upper(),k)
     return pd.concat([mColsdf, datadf], axis=1, ignore_index=False, sort=False)
 
 
