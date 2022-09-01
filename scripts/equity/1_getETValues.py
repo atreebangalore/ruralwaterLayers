@@ -8,68 +8,81 @@ import sys
 import pandas as pd
 ee.Initialize()
 
-root = Path.home() # find project root
-config = root.joinpath("Code","atree","config")
-sys.path += [str(root),str(config)]
-opPath = root.joinpath("Code","atree","outputs","equity")
-opPath.mkdir(parents=True,exist_ok=True) # create if not exist
-
+root = Path.home()  # find project root
+config = root.joinpath("Code", "atree", "config")
+sys.path += [str(root), str(config)]
+import geeassets
 import placenames
 
-def main():
+
+def main(year, fc_name, places, opPath):
     """
-    python Code/atree/scripts/equity/1_getETValues.py [arguments]
-    
+    python Code/atree/scripts/equity/1_getETValues.py [year] [fc] [places]
+
     Arguments:
     year: water year for Image filter. (YYYY)
-    state names: two letter abbreviated state names seperated by comma.
-    
+    fc: "districts" or "KAblocks"
+    places: two letter abbreviated state names seperated by comma or 'all'
+
     Example:
-    python Code/atree/scripts/equity/1_getETValues.py 2018 KA,TN
-    
+    python Code/atree/scripts/equity/1_getETValues.py 2018 districts KA,TN
+    python Code/atree/scripts/equity/1_getETValues.py 2018 KAblocks all
+
     Output:
     csv file saved at Code/atree/outputs/equity
     """
-    year = int(sys.argv[1])
-    states = sys.argv[2].replace("[","").replace("]","").split(",")
-    states_str = "_".join(states)
-    
-    state_col = placenames.datameet_state_col_name
-    district_col = placenames.datameet_district_col_name
-    
-    et_col = "ET_" + str(year)
-    chosen_states = [placenames.ST_names[state] for state in states]
-
-    start = ee.Date.fromYMD(year,6,1)
-    end = ee.Date.fromYMD(year+1,5,31)
+    et_col = f"ET_{str(year)}"
+    start = ee.Date.fromYMD(int(year), 6, 1)
+    end = ee.Date.fromYMD(int(year)+1, 5, 31)
 
     ############         Boundary Polygon        #################
-    boundaries = ee.FeatureCollection("users/cseicomms/boundaries/datameet_districts_boundary_2011")
-    boundaries = boundaries.filter(ee.Filter.inList(state_col,chosen_states));
-    
+    if fc_name == 'districts':
+        places_list = places.replace("[", "").replace("]", "").split(",")
+        opFilename = "_".join(places_list)
+        boundaries = geeassets.fCollDict[fc_name]['id']
+        state_col = geeassets.fCollDict[fc_name]['state_col']
+        required_col = geeassets.fCollDict[fc_name]['district_col']
+        chosen_states = [placenames.ST_names[state] for state in places_list]
+        boundaries = boundaries.filter(
+            ee.Filter.inList(state_col, chosen_states))
+    elif fc_name == 'KAblocks':
+        boundaries = geeassets.fCollDict[fc_name]['id']
+        required_col = geeassets.fCollDict[fc_name]['block_col']
+        opFilename = 'KAblocks'
+    else:
+        raise ValueError(f'{fc_name} assets not found.')
+
     ############         Image Collection        #################
-    iColl = ee.ImageCollection("users/cseicomms/evapotranspiration_ssebop")
-    iColl_filtered = iColl.filterDate(start,end)
+    iColl = geeassets.iCollDict['evapotranspiration']
+    iColl_filtered = iColl.filterDate(start, end)
     proj = iColl_filtered.first().projection()
     scale = proj.nominalScale()
     image = iColl_filtered.reduce(ee.Reducer.sum())
 
     pixDict = image.reduceRegions(
-        collection=boundaries, 
-        reducer= ee.Reducer.toList(), 
-        scale=scale, 
-        crs= proj
-        )
-    
-    pixDict = pixDict.select([district_col,"list"],[district_col,et_col],False).getInfo()
-    districts = [elem['properties'][district_col] for elem in pixDict['features']]
-    pixValues = [elem['properties'][et_col] for elem in pixDict['features']]
-    
-    etTable = pd.DataFrame({'districts':districts,et_col:pixValues})
-    filePath = opPath.joinpath(et_col + "_" + states_str + ".csv")
-    
-    etTable.to_csv(filePath,index=False)
-    print("file saved with filename",filePath)
+        collection=boundaries,
+        reducer=ee.Reducer.toList(),
+        scale=scale,
+        crs=proj
+    )
 
-if __name__=='__main__':
-    main()
+    pixDict = pixDict.select([required_col, "list"], [
+                             required_col, et_col], False).getInfo()
+    districts = [elem['properties'][required_col]
+                 for elem in pixDict['features']]
+    pixValues = [elem['properties'][et_col] for elem in pixDict['features']]
+
+    etTable = pd.DataFrame({'places': districts, et_col: pixValues})
+    filePath = opPath.joinpath(et_col + "_" + opFilename + ".csv")
+
+    etTable.to_csv(filePath, index=False)
+    print("output: ", filePath)
+
+
+if __name__ == '__main__':
+    year = sys.argv[1]
+    fc = sys.argv[2]  # districts or KAblocks
+    places = sys.argv[3]
+    opPath = root.joinpath("Code", "atree", "outputs", "equity")
+    opPath.mkdir(parents=True, exist_ok=True)  # create if not exist
+    main(year, fc, places, opPath)
