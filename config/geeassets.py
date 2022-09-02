@@ -16,6 +16,12 @@ fCollDict = {
     'KAblocks': {
         'id': ee.FeatureCollection("users/jaltol/FeatureCol/Karnataka_Block_Typologies_2015_2020"),
         'block_col': 'CD_Block_N'
+    },
+    'KAcommandarea': {
+        'id': ee.FeatureCollection('users/jaltol/FeatureCol/Karnataka_CommandArea')
+    },
+    'KAnoncommandarea': {
+        'id': ee.FeatureCollection('users/jaltol/FeatureCol/Karnataka_NonCommandArea')
     }
 }
 
