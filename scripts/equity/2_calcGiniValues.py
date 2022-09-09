@@ -21,6 +21,7 @@ def gini(arr):
     sorted_arr.sort()
 
     n = arr.size
+    if not n: return 'NA'
     coef = 2. / n
     const = (n + 1.) / n
     weighted_sum = np.sum([(i+1)*yi for i, yi in enumerate(sorted_arr)])
