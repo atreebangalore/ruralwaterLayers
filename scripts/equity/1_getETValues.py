@@ -38,6 +38,7 @@ def main(year, fc_name, places, opPath, roi=None):
     start = ee.Date.fromYMD(int(year), 6, 1)
     end = ee.Date.fromYMD(int(year)+1, 5, 31)
     roi_dict = dict(CA=fcd['KAcommandarea']['id'],NCA=fcd['KAnoncommandarea']['id'])
+    opSuffix = f'_{roi}' if roi else ''
 
     ############         Boundary Polygon        #################
     if fc_name == 'districts':
@@ -79,7 +80,7 @@ def main(year, fc_name, places, opPath, roi=None):
     pixValues = [elem['properties'][et_col] for elem in pixDict['features']]
 
     etTable = pd.DataFrame({'places': districts, et_col: pixValues})
-    filePath = opPath.joinpath(et_col + "_" + opFilename + ".csv")
+    filePath = opPath.joinpath(et_col + "_" + opFilename + opSuffix + ".csv")
 
     etTable.to_csv(filePath, index=False)
     print("output: ", filePath)
