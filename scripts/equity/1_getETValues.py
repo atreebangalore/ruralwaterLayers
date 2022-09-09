@@ -18,16 +18,17 @@ from geeassets import fCollDict as fcd
 
 def main(year, fc_name, places, opPath, roi=None):
     """
-    python Code/atree/scripts/equity/1_getETValues.py [year] [fc] [places] [roi]
+    python Code/atree/scripts/equity/1_getETValues.py [year] [fc] [places] [roi]*
 
     Arguments:
     year: water year for Image filter. (YYYY)
     fc: "districts" or "KAblocks"
     places: two letter abbreviated state names seperated by comma or 'all' for KAblocks
-    roi (optional): CA or NCA - clip to KA command area or non command area
+    roi (optional): CA or NCA - clip to command area or non command area*
+    *roi works only for Karnataka
 
     Example:
-    python Code/atree/scripts/equity/1_getETValues.py 2018 districts KA,TN
+    python Code/atree/scripts/equity/1_getETValues.py 2018 districts KA CA
     python Code/atree/scripts/equity/1_getETValues.py 2018 KAblocks all CA
 
     Output:
@@ -36,6 +37,7 @@ def main(year, fc_name, places, opPath, roi=None):
     et_col = f"ET_{str(year)}"
     start = ee.Date.fromYMD(int(year), 6, 1)
     end = ee.Date.fromYMD(int(year)+1, 5, 31)
+    roi_dict = dict(CA=fcd['KAcommandarea']['id'],NCA=fcd['KAnoncommandarea']['id'])
 
     ############         Boundary Polygon        #################
     if fc_name == 'districts':
@@ -51,7 +53,6 @@ def main(year, fc_name, places, opPath, roi=None):
         boundaries = fcd[fc_name]['id']
         required_col = fcd[fc_name]['block_col']
         opFilename = 'KAblocks'
-        roi_dict = dict(CA=fcd['KAcommandarea']['id'],NCA=fcd['KAnoncommandarea']['id'])
     else:
         raise ValueError(f'{fc_name} assets not found.')
 
@@ -61,7 +62,7 @@ def main(year, fc_name, places, opPath, roi=None):
     proj = iColl_filtered.first().projection()
     scale = proj.nominalScale()
     image = iColl_filtered.reduce(ee.Reducer.sum())
-    if roi and fc_name == 'KAblocks':
+    if roi:
         image = image.clip(roi_dict[roi])
 
     pixDict = image.reduceRegions(
