@@ -79,9 +79,11 @@ DT_names = {
     'JH': {
         'KHUN': ['Khunti', 'Khuti'],
         'KODA': ['Kodarma', 'Koderma'],
-        'SARA': ['Saraikela-kharsawan', 'Sareikela And Kharsawan ', 'Seraikela-Kharsawan'],
+        'SARA': ['Saraikela-kharsawan', 'Sareikela And Kharsawan ', 'Seraikela-Kharsawan', 'Saraikela-Kharswana', 'Saraikela kharsawan'],
         'PURB': ['Purbi Singhbhum', 'East Singhbhum'],
-        'PASH': ['Pashchimi Singhbhum', 'Paschim Singhbhum', 'West Singhbhum']
+        'PASH': ['Pashchimi Singhbhum', 'Paschim Singhbhum', 'West Singhbhum'],
+        'PAKU': ['Pakaur','Pakur'],
+        'SAHI': ['Sahibganj','Sahebganj']
     },
     'MP': {
         'NARS': ['Narsimhapur', 'Narsinghpur'],
@@ -92,9 +94,12 @@ DT_names = {
     },
     'OD': {
         'BALA': ['Baleshwar', 'Balasore'],
-        'BOUD': ['Baudh', 'Boudh'],
+        'BAUD': ['Baudh', 'Boudh'],
         'JAJP': ['Jajpur', 'Jajapur'],
-        'KHUR': ['Khordha', 'Khurda']
+        'KHOR': ['Khordha', 'Khurda', 'Khorda'],
+        'DEBA': ['Debagarh', 'Deogarh'],
+        'NABA': ['Nabarangapur', 'Nabarangpur'],
+        'SONA': ['Sonapur', 'Sonepur']
     },
     'PU': {
         'PUDU': ['Puducherry', 'Pondicherry']
