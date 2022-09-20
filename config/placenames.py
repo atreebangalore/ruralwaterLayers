@@ -99,7 +99,7 @@ DT_names = {
         'KHOR': ['Khordha', 'Khurda', 'Khorda'],
         'DEBA': ['Debagarh', 'Deogarh'],
         'NABA': ['Nabarangapur', 'Nabarangpur'],
-        'SONA': ['Sonapur', 'Sonepur']
+        'SUBA': ['Sonapur', 'Sonepur', 'Subarnapur']
     },
     'PU': {
         'PUDU': ['Puducherry', 'Pondicherry']
