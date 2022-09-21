@@ -1,7 +1,7 @@
 """download near real time IMD daily data including precipitation,
 minimum and maximum temperature
 """
-import sys
+import sys, os
 from pathlib import Path
 from imddaily import imddaily
 from datetime import datetime
@@ -30,6 +30,19 @@ def main(var_type, start_date, end_date, grd_path, tif_path):
     today_tif.mkdir(parents=True, exist_ok=True)
     data = imddaily.get_data(var_type, start_date, end_date, today_grd)
     data.to_geotiff(today_tif)
+    suffix = {
+        "raingpm": "raingpm_",
+        "tmax": "tmax_",
+        "tmin": "tmin_",
+        "rain": "rain_",
+        "tmaxone": "tmax1_",
+        "tminone": "tmin1_",
+    }
+    for file in os.listdir(today_tif):
+        old_path = os.path.join(today_tif, file)
+        new = file.replace(suffix[var_type],'')
+        new_path = os.path.join(today_tif, new)
+        os.rename(old_path, new_path)
 
 if __name__=='__main__':
     var_type = sys.argv[1]
