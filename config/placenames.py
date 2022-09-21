@@ -2,25 +2,34 @@ DT_names = {
     'KA': {
         'CHIK': ['Chikbalapur', 'Chikballapur', 'Chikkaballapura'],
         'BELL': ['Bellary', 'Ballari'],
-        'BANG': ['Bengaluru Urban', 'Bangalore', 'Bangalore Rural', 'Bangalore Urban'],
+        'BANG': ['Bangalore Rural', 'Bengaluru Rural'],
+        'BENG': ['Bengaluru Urban', 'Bangalore Urban', 'Bangalore', 'Bengaluru'],
         'CHIM': ['Chikkmagaluru', 'Chikmagalur'],
         'DAKS': ['Dakshin Kannad', 'Dakshina Kannada'],
         'BELG': ['Belgaum', 'Belagavi'],
         'GULB': ['Kalaburagi', 'Gulbarga'],
         'SHIV': ['Shimoga', 'Shivamogga'],
-        'BIJA': ['Bijapur', 'Vijayapura']
+        'BIJA': ['Bijapur', 'Vijayapura'],
+        'CHAM': ['Chamarajanagar', 'Chamrajnagar'],
+        'UTTA': ['Uttar kannad','Uttara kannada']
     },
     'MH': {
         'AHMA': ['Ahmednagar', 'Ahmadnagar'],
-        'BEED': ['Bid', 'Bheed'],
-        'BHUL': ['Buldana', 'Bhuldana'],
+        'BEED ': ['Bid', 'Bheed', 'Beed'],
+        'BULD': ['Buldana', 'Bhuldana', 'Buldhana'],
         'RAIG': ['Raigad', 'Raigarh'],
-        'MUMB': ['Mumbai', 'Mumbai Suburban']
+        'MUMB': ['Mumbai', 'Mumbai Suburban'],
+        'GARC': ['Garhchiroli', 'Gadchiroli'],
+        'GOND': ['Gondiya', 'Gondia']  
     },
     'TN': {
         'CHEN': ['Chengalpattu', 'Chinglepet'],
         'KANC': ['Kanchipuram', 'Kancheepuram'],
-        'KANY': ['Kanyakumari', 'Kanniyakumari']
+        'KANN': ['Kanyakumari', 'Kanniyakumari'],
+        'THOO': ['Thoothukkudi', 'Thoothukudi'],
+        'VILU': ['Viluppuram', 'Villupuram'],
+        'VIRU': ['Virudunagar', 'Virudhunagar'],
+        'NAGA': ['Nagappattinam', 'Nagapattinnam']
     },
     'AP': {
         'KADA': ['Ysr', 'Kadapa', 'Cuddapah', 'YSR District Kadapa'],
