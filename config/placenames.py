@@ -32,8 +32,9 @@ DT_names = {
         'NAGA': ['Nagappattinam', 'Nagapattinnam']
     },
     'AP': {
-        'KADA': ['Ysr', 'Kadapa', 'Cuddapah', 'YSR District Kadapa'],
-        'NELL': ['Nellore', 'Sri Potti Sriramulu Nellore']
+        'YSR': ['Y.s.r', 'Kadapa', 'Cuddapah', 'YSR District Kadapa'],
+        'SRI' : ['Nellore', 'Sri Potti Sriramulu Nellore', 'SPSR Nellore'],
+        'VISA': ['Visakhapatanam', 'Visakhapatnam']
     },
     'GJ': {
         'AHME': ['Ahmedabad', 'Ahmadabad'],
