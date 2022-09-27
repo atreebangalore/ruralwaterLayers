@@ -170,7 +170,7 @@ datameet_district_col_name = "DISTRICT"
 ST_list = {
     'AN': ['Andaman & Nicobar Island'],
     'AP': ['Andhra Pradesh'],
-    'AR': ['Arunachal Pradesh'],
+    'AR': ['Arunachal Pradesh', 'Arunanchal Pradesh'],
     'AS': ['Assam'],
     'BR': ['Bihar'],
     'CG': ['Chhattisgarh'],
