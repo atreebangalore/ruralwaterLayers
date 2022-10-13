@@ -103,13 +103,15 @@ DT_names = {
         'RIBH': ['Ribhoi', 'Ri Bhoi']
     },
     'OD': {
-        'BALA': ['Baleshwar', 'Balasore'],
-        'BAUD': ['Baudh', 'Boudh'],
+        'BALE': ['Baleshwar', 'Balasore'],
+        'BAUD': ['Baudh', 'Boudh', 'Bauda'],
         'JAJP': ['Jajpur', 'Jajapur'],
         'KHOR': ['Khordha', 'Khurda', 'Khorda'],
         'DEBA': ['Debagarh', 'Deogarh'],
         'NABA': ['Nabarangapur', 'Nabarangpur'],
-        'SUBA': ['Sonapur', 'Sonepur', 'Subarnapur']
+        'SUBA': ['Sonapur', 'Sonepur', 'Subarnapur'],
+        'ANUG': ['Anugul', 'Angul'],
+        'JAGA': ['Jagatsinghapur', 'Jagatsinghpur']
     },
     'PU': {
         'PUDU': ['Puducherry', 'Pondicherry']
