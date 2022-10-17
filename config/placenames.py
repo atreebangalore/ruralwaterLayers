@@ -48,7 +48,8 @@ DT_names = {
         'MAHA': ['Maharajganj', 'Mahraganj'],
         'RAEB': ['Rae Bareli', 'Raebareli'],
         'SHRA': ['Shrawasti', 'Shravasti'],
-        'SIDH': ['Sidharthnagar', 'Sidharth Nagar']
+        'SIDH': ['Sidharthnagar', 'Sidharth Nagar'],
+        'BAGH': ['Baghpat', 'Bagpat']
     },
     'WB': {
         'COOC': ['Coochbehar', 'Koch Bihar'],
