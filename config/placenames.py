@@ -146,6 +146,7 @@ ST_names = {
     'JK': 'Jammu & Kashmir',
     'KA': 'Karnataka',
     'KL': 'Kerala',
+    'LA': 'Ladakh',
     'LK': 'Lakshadweep',
     'ME': 'Meghalaya',
     'MH': 'Maharashtra',
