@@ -272,22 +272,26 @@ class CWR:
             Dict[str, float]: {crop: ETc(m3)}
         """
         self.ETc_cropwise = defaultdict(dict)
+        self.mmCropMonth = defaultdict(dict)
 
         mo_dy_dict = self.mo_range(self.year)
         for crop in self.crop_dict:
             area, p, start_date, crop_kc, crop_period = self.crop_dict[crop]
             self.ETc_cropwise[crop]['total'] = 0
+            self.mmCropMonth[crop]['total'] = 0
             for month in self.crop_monthly_kc[crop]:
                 ETc_month_mm = self.crop_monthly_kc[crop][month] * \
-                    self.ETo_dict[month]*mo_dy_dict[month]
+                    self.ETo_dict[month]*mo_dy_dict[month] #* (p/100)
                 ETc_month_m3 = round(((ETc_month_mm * 1e-3) * (area * 1e4))) #mm*Ha -> m3
                 
+                self.mmCropMonth[crop][month] = ETc_month_mm
+                self.mmCropMonth[crop]['total'] += ETc_month_mm
                 self.ETc_cropwise[crop][month] = ETc_month_m3
                 self.ETc_cropwise[crop]['total'] += ETc_month_m3
                 self.ETc_monthwise[month][crop] = ETc_month_m3
                 self.ETc_monthwise[month]['total'] += ETc_month_m3
             
-        return (self.ETc_cropwise,self.ETc_monthwise)  # {crop: ETc(m3)}
+        return (self.mmCropMonth,self.ETc_cropwise,self.ETc_monthwise)  # {crop: ETc(m3)}
 
     def mo_yr_seq(self, year: int) -> List[Tuple[int, int]]:
         """get a sequence of (year, month) for a hydrological year

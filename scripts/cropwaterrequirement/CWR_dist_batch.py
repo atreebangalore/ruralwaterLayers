@@ -43,7 +43,7 @@ for idx,row in cropdb[['state','district']].iterrows():
 
 season_list = ['Kharif', 'Rabi', 'Summer', 'Whole Year']
 
-for _,row in majority_ag.iloc[:1,:].iterrows():
+for _,row in majority_ag.iloc[1:2,:].iterrows():
     year = 2019
     st = row['state'].title()
     dst = row['District'].title()
@@ -78,7 +78,11 @@ for _,row in majority_ag.iloc[:1,:].iterrows():
         # for k,v in kc_mo.items():
             # print(k,":",v)
 
-        ETc_crops[season], ETc_months[season] = cwr.get_ETc()
+        ETc_mm_crops, ETc_crops[season], ETc_months[season] = cwr.get_ETc()
+        print(f"\n======== ETc crop wise - {season} (mm) =======")
+        for crop, mm_value in ETc_mm_crops.items():
+            total = mm_value['total']
+            print(crop, ":", f'{total:,}')
 
         print("\n*****  ETc Crop Wise - " + season + " (m3) *****")
         for crop,monthly_dict in ETc_crops[season].items():
