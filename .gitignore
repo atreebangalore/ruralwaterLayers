@@ -10,3 +10,5 @@ qgis/
 *.json
 *.txt
 *.bat
+*.ini
+.tmp*
