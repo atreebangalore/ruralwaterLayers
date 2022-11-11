@@ -20,6 +20,8 @@ from datetime import timedelta as td
 from calendar import monthrange
 from typing import List, Dict, Tuple, Union
 from collections import defaultdict
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     import ee
@@ -46,10 +48,10 @@ class CropDetails:
         self.dist_n = dist.title()
         self.season = [season] if type(season) == str else season.split()
         
-        print("\n************************")
-        print("state: ", self.state_n)
-        print("district: ", self.dist_n)
-        print("season: ",self.season)
+        logger.info("\n************************")
+        logger.info(f"state: {self.state_n}")
+        logger.info(f"district: {self.dist_n}")
+        logger.info(f"season: {self.season}")
 
     def get_ST_abb(self) -> str:
         """for the input state name get the two letter abbreviated name
@@ -90,7 +92,7 @@ class CropDetails:
             sowing_date = self.get_sowing_date(season)
             df = self.read_crop_details(season)
             df = df.sort_values(by=['perc'], ascending=False).head(num_crops).reset_index(drop=True)
-            print("\n************************")
+            logger.info("\n************************")
             df['area_lulc'] = (df['perc']/100) * area_lulc
             for _, row in df.iterrows():
                 output[row['crop']] = (
@@ -113,17 +115,18 @@ class CropDetails:
             pd.DataFrame: DataFrame of the Crop details
         """
         
-        fpath = os.path.join(root,'data','crops','allcrops-allseasons-allstates-201920.csv')
+        # fpath = os.path.join(root,'data','crops','allcrops-allseasons-allstates-201920.csv')
+        fpath = Path(os.path.dirname(os.path.realpath(__file__))).joinpath('crop_db_corrected.csv')
         csv = pd.read_csv(fpath)
         csv = csv[csv['state']==self.state_n]
-        # print("column names: ",csv.columns)
-        # print("size of csv subset: ",csv.shape)
-        # print("csv states: ",csv['state'].unique())
-        # print("csv districts: ",csv['district'].unique())
+        # logger.info(f"column names: {csv.columns}")
+        # logger.info(f"size of csv subset: {csv.shape}")
+        # logger.info(f"csv states: {csv['state'].unique()}")
+        # logger.info(f"csv districts: {csv['district'].unique()}")
 
         if self.dist_n.upper() in set(csv['district'].values):
             dn = self.dist_n.upper()
-            print("dn if:", dn)
+            logger.info(f"dn if: {dn}")
         else:
             dist_dict = DT_names[self.state_abb]
             for abb, dist_list in dist_dict.items():
@@ -131,9 +134,9 @@ class CropDetails:
                     for dist_sub in dist_list:
                         if dist_sub.upper() in set(csv['district'].values):
                             dn = dist_sub.upper()
-                            print("dn else: ",dn)
+                            logger.info(f"dn else: {dn}")
         dist_crops = csv[(csv['district'] == dn) & (csv['season'] == season) & (csv['perc'] != 0)]
-        print("no of crops found: ",len(dist_crops))
+        logger.info(f"no of crops found: {len(dist_crops)}")
 
         return dist_crops
 
@@ -265,7 +268,7 @@ class CWR:
             self.crop_monthly_kc[crop] = monthlyKc
         return self.crop_monthly_kc
 
-    def get_ETc(self) -> Tuple[Dict[str, float], Dict[str, float]]:
+    def get_ETc(self) -> Tuple[Dict[str, float], Dict[str, float], Dict[str, float]]:
         """get the volumetric ETc for a crop in m3
 
         Returns:
