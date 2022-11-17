@@ -76,6 +76,17 @@ class Info():
                 '__ASYNCPOST': 'true',
                 'ctl00$ContentPlaceHolder$btnGO': 'Show'
             },
+            'PURE': {
+                'ctl00$ScriptManager1': 'ctl00$upPnl|ctl00$ContentPlaceHolder$Button1',
+                'ctl00$ddLanguage': '',
+                'ctl00$ContentPlaceHolder$ddState': '', # state value
+                'ctl00$ContentPlaceHolder$lstbox': '', # contaminant value
+                '__EVENTTARGET': '',
+                '__EVENTARGUMENT': '',
+                '__LASTFOCUS': '',
+                '__ASYNCPOST': 'true',
+                'ctl00$ContentPlaceHolder$Button1': 'Show'
+            },
         }
         return ref_dict[param]
 
@@ -134,11 +145,46 @@ class Schemes(JJM):
             raise IOError('post to get district list failed')
         return BeautifulSoup(resp.text, 'html.parser')
 
+class Purification(JJM):
+    def __init__(self) -> None:
+        super().__init__()
+        self.session, self.soup = self.get_soup(self.PUREURL)
+    
+    def get_input_details(self) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+        self.state_vals_names = self.dropdown_options(self.soup, 'Div1', 'ContentPlaceHolder_ddState')
+        self.contamination_options = self.dropdown_options(self.soup, 'Div1', 'ContentPlaceHolder_lstbox')
+        return self.state_vals_names, self.contamination_options
+
+    def get_basics(self) -> None:
+        self.base_form_data = self.get_base_form_data(self.soup)
+        self.base_header = self.get_base_header()
+        self.base_header['Referer'] = self.PUREURL
+        self.form_data = self.get_form_data('PURE')
+        self.form_data.update(self.base_form_data)
+
+    def get_data(self, state_value: str, contaminant_value: str) -> BeautifulSoup:
+        self.form_data.update({
+            'ctl00$ContentPlaceHolder$ddState': state_value,
+            'ctl00$ContentPlaceHolder$lstbox': contaminant_value
+            })
+        resp = self.session.post(
+            self.PUREURL, data=self.form_data, headers=self.base_header, allow_redirects=True)
+        if not resp.ok:
+            raise IOError('post to get district list failed')
+        return BeautifulSoup(resp.text, 'html.parser')
 
 if __name__ == '__main__':
-    test = Schemes()
-    states_list = test.get_input_details()
-    test.get_basics()
-    data = test.get_data('004')
-    print(data)
+    # test = Schemes()
+    # states_list = test.get_input_details()
+    # test.get_basics()
+    # data = test.get_data('004')
+    # print(data)
+    # print(states_list)
+
+    test = Purification()
+    states_list, cont_list = test.get_input_details()
     print(states_list)
+    print(cont_list)
+    test.get_basics()
+    data = test.get_data('033', '-1')
+    print(data)
