@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 # water purification plants and contaminants
 # https://ejalshakti.gov.in/IMISReports/Reports/BasicInformation/rpt_RWS_CommunityWaterPurificationPlant_S.aspx?Rep=0&RP=Y
 #
-# water quality testing
+# water quality testing (District & Block)
 # https://ejalshakti.gov.in/IMISReports/Reports/TargetAchievement/rpt_WQM_WaterQualityTestingInLabs_S.aspx?Rep=0&RP=Y&APP=IMIS
 #
 # JJM Dashboard & FHTC
@@ -32,8 +32,8 @@ from bs4 import BeautifulSoup
 class Info():
     JJMPATH = Path.home().joinpath('Code', 'atree', 'data', 'jjm')
     SCHEMESURL = 'https://ejalshakti.gov.in/IMISReports/Reports/BasicInformation/rpt_SchemesSourcesGWSW_D.aspx?Rep=0'
-    PUREURL = 'https://ejalshakti.gov.in/IMISReports/Reports/BasicInformation/rpt_RWS_CommunityWaterPurificationPlant_S.aspx?Rep=0&RP=Y'
-    WQURL = 'https://ejalshakti.gov.in/IMISReports/Reports/TargetAchievement/rpt_WQM_WaterQualityTestingInLabs_S.aspx?Rep=0&RP=Y&APP=IMIS'
+    PUREURL = 'https://ejalshakti.gov.in/IMISReports/Reports/BasicInformation/rpt_RWS_CommunityWaterPurificationPlant_D.aspx?Rep=0&RP=Y'
+    WQURL = 'https://ejalshakti.gov.in/IMISReports/Reports/TargetAchievement/rpt_WQM_WaterQualityTestingInLabs_D.aspx?Rep=0&RP=Y&APP=IMIS'
     FHTCURL = 'https://ejalshakti.gov.in/jjmreport/JJMIndia.aspx'
 
     def __init__(self) -> None:
@@ -101,14 +101,12 @@ class JJM(Info):
         soup = BeautifulSoup(resp.text, 'html.parser')
         return session, soup
 
-    def get_state_details(self, soup: BeautifulSoup) -> List[Tuple[str, str]]:
-        table = soup.find('table', {'class': 'SelectData'})
-        if not table:
-            table = soup.find('div', {'id': 'Div1'})
-        state_select = table.find(
-            'select', {'id': 'ContentPlaceHolder_ddState'})
-        state_options = state_select.find_all('option')
-        return [(s_option.attrs['value'], s_option.text) for s_option in state_options]
+    def dropdown_options(self, soup: BeautifulSoup, div_id: str, drop_id: str) -> List[Tuple[str, str]]:
+        div_cont = soup.find('div', {'id': div_id})
+        dropdown_select = div_cont.find(
+            'select', {'id': drop_id})
+        select_options = dropdown_select.find_all('option')
+        return [(s_option.attrs['value'], s_option.text) for s_option in select_options]
 
 
 class Schemes(JJM):
@@ -117,7 +115,7 @@ class Schemes(JJM):
         self.session, self.soup = self.get_soup(self.SCHEMESURL)
 
     def get_input_details(self) -> List[Tuple[str, str]]:
-        self.state_vals_names = self.get_state_details(self.soup)
+        self.state_vals_names = self.dropdown_options(self.soup, 'Selection', 'ContentPlaceHolder_ddState')
         return self.state_vals_names
 
     def get_basics(self) -> None:
@@ -143,3 +141,4 @@ if __name__ == '__main__':
     test.get_basics()
     data = test.get_data('004')
     print(data)
+    print(states_list)
