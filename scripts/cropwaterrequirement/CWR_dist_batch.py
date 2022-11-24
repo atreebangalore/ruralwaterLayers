@@ -12,7 +12,7 @@ sys.path.append(root)
 
 from config.gee_assets import fCol
 from fao import CWR, CropDetails
-logging.basicConfig(filename='file.log',filemode='w')
+logging.basicConfig(filemode='w')
 
 dist2011 = fCol['dist2011']
 
@@ -131,8 +131,8 @@ def get_detail(st, dst, outputfile):
     out_df.to_csv(outputfile, index=False)
 
 if __name__=='__main__':
-    state = 'Uttar Pradesh'
-    district = 'Budaun'
+    state = 'Bihar'
+    district = 'Buxar'
     district_logger = logging.getLogger()
     district_logger.setLevel(logging.INFO)
     district_fHandler = logging.FileHandler(str(Path(os.path.dirname(os.path.realpath(__file__))).joinpath('outputs', f'{state}_{district}.log')))
