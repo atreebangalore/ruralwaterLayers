@@ -87,6 +87,25 @@ def get_token(username, password):
     print(f'AppEEARS Token expiration: {token_response_eco["expiration"]}')
     return token_response_eco['token']
 
+def download_data(task_id, token, dpath):
+    response_eco_bundle = requests.get(
+        'https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}'.format(task_id),  
+        headers={'Authorization': 'Bearer {0}'.format(token)}
+    )
+    bundle_response = response_eco_bundle.json()
+    files_num = len(bundle_response['files'])
+    print(f'Total Number of Files: {files_num}')
+    for i in range(files_num):
+        response = requests.get(
+            'https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}/{1}'.format(task_id, bundle_response['files'][i]['file_id']),
+            headers={'Authorization': 'Bearer {0}'.format(token)}, 
+            allow_redirects=True,
+            stream=True)
+        with open(os.path.join(dpath, os.path.split(bundle_response['files'][i]['file_name'])[-1]), 'wb') as f:
+            for data in response.iter_content(chunk_size=8192):
+                f.write(data)
+        print(f'Downloaded Files: {i+1}/{files_num}')
+
 def main(shp_path:str, start:str, end:str, username:str, password:str):
     """
     args:
@@ -106,7 +125,15 @@ def main(shp_path:str, start:str, end:str, username:str, password:str):
         print('Check the dates....\n', e)
         sys.exit()
     dest_dir = dataFol.joinpath(task_name)
-    dest_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        dest_dir.mkdir(parents=True)
+    except Exception:
+        print(f'Task "{task_name}" already available at \n{dest_dir}')
+        sys.exit()
+    download_path = dest_dir.joinpath('downloaded')
+    download_path.mkdir(parents=True, exist_ok=True)
+    convert_path = dest_dir.joinpath('converted')
+    convert_path.mkdir(parents=True, exist_ok=True)
     token_eco = get_token(username, password)
     print('Reading shape file and getting coordinates of the feature')
     coords = get_coordinates(shp_path)
@@ -115,6 +142,9 @@ def main(shp_path:str, start:str, end:str, username:str, password:str):
     task_id = create_task(task, token_eco)
     print(f'Task id: {task_id}')
     progress(task_id, token_eco)
+    time.sleep(5)
+    download_data(task_id, token_eco, download_path)
+    print(f'Download Location: {download_path}')
 
 if __name__=='__main__':
     shp_path = sys.argv[1]
