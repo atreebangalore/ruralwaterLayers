@@ -4,7 +4,7 @@ import requests
 import sys
 import time
 import geopandas as gpd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 dataFol = Path.home().joinpath("Data","et","ecostress")
 dataFol.mkdir(parents=True, exist_ok=True)
@@ -106,6 +106,42 @@ def download_data(task_id, token, dpath):
                 f.write(data)
         print(f'Downloaded Files: {i+1}/{files_num}')
 
+def dpipeline(download_path, start_date_ecostress, end_date_ecostress, task_name, shp_path, username, password):
+    token_eco = get_token(username, password)
+    print('Reading shape file and getting coordinates of the feature')
+    coords = get_coordinates(shp_path)
+    print('Creating Task!!!')
+    task = task_json(coords, start_date_ecostress, end_date_ecostress, task_name)
+    task_id = create_task(task, token_eco)
+    print(f'Task id: {task_id}')
+    progress(task_id, token_eco)
+    time.sleep(5)
+    download_data(task_id, token_eco, download_path)
+    print(f'Download Location: {download_path}')
+
+def get_date(file: str):
+    doy = file.split('_')[-2]
+    year = doy[3:7]
+    doy = int(doy[7:10])-1
+    start = datetime.strptime(f'{year}-01-01', '%Y-%m-%d')
+    end = datetime.strptime(f'{year}-12-31', '%Y-%m-%d')
+    year_list = [start.strftime('%Y%m%d')]
+    while start != end:
+        start+=timedelta(days=1)
+        year_list.append(start.strftime('%Y%m%d'))
+    return year_list[doy]
+
+def cpipeline(d_path):
+    print('Converting Files....')
+    files = [
+        file
+        for file in os.listdir(d_path)
+        if os.path.splitext(file)[1] == '.tif'
+    ]
+    for file in files:
+        date = get_date(file)
+        filename = f'ECO3ETPTJPL.001_EVAPOTRANSPIRATION_PT_JPL_ETdaily_{date}.tif'
+
 def main(shp_path:str, start:str, end:str, username:str, password:str):
     """
     args:
@@ -119,32 +155,27 @@ def main(shp_path:str, start:str, end:str, username:str, password:str):
     task_name = f'{filename[:10]}-{start}-{end}'
     print(f'Task: {task_name}')
     try:
-        start_date_ecostress = datetime.strptime(start, '%Y%m%d').strftime('%m-%d-%Y')
-        end_date_ecostress = datetime.strptime(end, '%Y%m%d').strftime('%m-%d-%Y')
+        start_date = datetime.strptime(start, '%Y%m%d')
+        end_date = datetime.strptime(end, '%Y%m%d')
+        start_date_ecostress = start_date.strftime('%m-%d-%Y')
+        end_date_ecostress = end_date.strftime('%m-%d-%Y')
     except ValueError as e:
         print('Check the dates....\n', e)
         sys.exit()
     dest_dir = dataFol.joinpath(task_name)
-    try:
-        dest_dir.mkdir(parents=True)
-    except Exception:
-        print(f'Task "{task_name}" already available at \n{dest_dir}')
-        sys.exit()
+    dest_dir.mkdir(parents=True, exist_ok=True)
     download_path = dest_dir.joinpath('downloaded')
-    download_path.mkdir(parents=True, exist_ok=True)
+    try:
+        download_path.mkdir(parents=True)
+        dpipeline(download_path, start_date_ecostress, end_date_ecostress, task_name, shp_path, username, password)
+    except Exception:
+        print(f'Task "{task_name}" already downloaded at \n{download_path}')
     convert_path = dest_dir.joinpath('converted')
-    convert_path.mkdir(parents=True, exist_ok=True)
-    token_eco = get_token(username, password)
-    print('Reading shape file and getting coordinates of the feature')
-    coords = get_coordinates(shp_path)
-    print('Creating Task!!!')
-    task = task_json(coords, start_date_ecostress, end_date_ecostress, task_name)
-    task_id = create_task(task, token_eco)
-    print(f'Task id: {task_id}')
-    progress(task_id, token_eco)
-    time.sleep(5)
-    download_data(task_id, token_eco, download_path)
-    print(f'Download Location: {download_path}')
+    try:
+        convert_path.mkdir(parents=True, exist_ok=True) # remove exits_ok after completion
+        cpipeline(download_path)
+    except Exception:
+        print(f'Task "{task_name}" already converted at \n{convert_path}')
 
 if __name__=='__main__':
     shp_path = sys.argv[1]
