@@ -48,10 +48,12 @@ def main(source:str, dest:str, last_image:Optional[str]=None):
     """Migrate Images from source ImageCollection to dest ImageCollection
     Note:- give read and write Permissions to respective source and dest
 
+    python Code/atree/scripts/asset_migration.py [source] [dest] [last_image]
+
     Args:
         source (str): Asset id of the ImageCollection
         dest (str): Asset id of the ImageCollection
-        last_image (str): name of the last image copied successfully, use this
+        last_image (Optional[str]): name of the last image copied successfully, use this
         in case of any interuptions occured (maybe due to internet issues)
 
     Example:
@@ -82,7 +84,7 @@ def main(source:str, dest:str, last_image:Optional[str]=None):
                     execute_copy(cp_cmd)
                     not_completed = False
                 except Exception as e:
-                    print(f'failed execution, retrying! {count}')
+                    print(f'failed execution {name}, retrying! {count}')
                     count += 1
                     if count == 6:
                         raise e
