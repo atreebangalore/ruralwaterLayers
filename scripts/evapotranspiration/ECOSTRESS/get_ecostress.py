@@ -293,6 +293,8 @@ def main(shp_path:str, start:str, end:str, username:str, password:str):
     try:
         download_path.mkdir(parents=True)
         dpipeline(download_path, start_date_ecostress, end_date_ecostress, task_name, shp_path, username, password)
+    except KeyError as exc:
+        raise TypeError('Strip shapefile from MULTIPOLYGON to POLYGON') from exc
     except Exception:
         print(f'Task "{task_name}" already downloaded at \n{download_path}')
     convert_path = dest_dir.joinpath('converted')
