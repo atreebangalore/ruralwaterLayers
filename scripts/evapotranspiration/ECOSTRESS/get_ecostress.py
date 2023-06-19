@@ -1,6 +1,8 @@
 """Download ECOSTRESS data for given shape file through AppEEARS API.
 Recommended that Shape file holds a single feature or by default the first
-feature will be selected.
+feature will be selected. Also make sure the feature is of type POLYGON and 
+not MULTIPOLYGON, if MULTIPOLYGON extract the POLYGON needed in ArcGIS or QGIS.
+[shp file containing one feature which is of POLYGON type mandatory]
 Create account in https://appeears.earthdatacloud.nasa.gov/ for username and
 password
 EarthData or USGS account already registered can be used.
@@ -260,7 +262,7 @@ def main(shp_path:str, start:str, end:str, username:str, password:str):
     """
     Download ECOSTRESS data for given shape file through AppEEARS API.
     Recommended that Shape file holds a single feature or by default the first
-    feature will be selected.
+    feature will be selected. type accepted is POLYGON, not MULTIPOLYGON.
     Please avoid special characters in the Password.
     
     args:
