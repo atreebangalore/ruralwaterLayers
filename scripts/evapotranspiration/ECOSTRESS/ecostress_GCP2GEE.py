@@ -51,7 +51,7 @@ def main():
     ee_img_col = 'users' + '/' + geeuser + '/' + geecoll
     print("ee image coll path: ",ee_img_col)
     
-    gs_command = 'gsutil ls ' + bucket + 'm' + year + '*.tif'    # list gs tif files for particular year
+    gs_command = 'gsutil ls ' + bucket + '*' + year + '*.tif'    # list gs tif files for particular year
     gs_tiffs = os.popen(gs_command,mode='r').read().strip().split('\n')
     print('Total number of files: {}'.format(len(gs_tiffs)))
     
@@ -62,7 +62,7 @@ def main():
         
     for tif in gs_tiffs:
         print("copying from GCP bucket: ",tif)
-        suffix = 'ECO3ETPTJPL.001_EVAPOTRANSPIRATION_PT_JPL_ETdaily_' #20190113_014827'
+        suffix = 'ECO3ETPTJPL_001_EVAPOTRANSPIRATION_PT_JPL_ETdaily_' #20190113_014827'
         fbname = tif.replace(bucket, '').replace('.tif', '') # get image name
         xDate = fbname.replace(suffix, '').split('_')[0]  # get YYYYMM01
         dt = datetime.strptime(xDate,"%Y%m%d").replace(tzinfo=timezone.utc).timestamp() * 1000    #.strftime("%Y-%m-%dT%H:%M:%S")
@@ -70,7 +70,7 @@ def main():
         print("setting property 'system:time_start' :", dt)
         eename = ee_img_col + "/" + fbname   
         print("copying to GEE Image Collection: ", eename)
-        ee_command = 'earthengine upload image --asset_id=' + eename + ' ' + tif + ' --nodata_value=-999' + ' --time_start=' + str(int(dt))
+        ee_command = 'earthengine upload image --asset_id=' + eename + ' ' + tif + ' --nodata_value=-352600000000.0' + ' --time_start=' + str(int(dt))
         print(ee_command)
         output = check_output(ee_command, shell=True)
         print(output)

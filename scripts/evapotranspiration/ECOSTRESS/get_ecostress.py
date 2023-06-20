@@ -23,6 +23,7 @@ import os
 import requests
 import sys
 import time
+import random
 import geopandas as gpd
 from datetime import datetime, timedelta
 import rasterio
@@ -252,8 +253,9 @@ def cpipeline(d_path: Path, c_path: Path):
         print(f'converting: {file}')
         date, time = get_date(file)
         print(f'Julian date converted: {date} & {time}')
+        rn = random.randrange(100, 999) # random suffix to prevent same filename
         in_path = d_path.joinpath(file)
-        outname = f'ECO3ETPTJPL.001_EVAPOTRANSPIRATION_PT_JPL_ETdaily_{date}_{time}.tif'
+        outname = f'ECO3ETPTJPL_001_EVAPOTRANSPIRATION_PT_JPL_ETdaily_{date}_{time}_{rn}.tif'
         out_path = c_path.joinpath(outname)
         unit_conversion(in_path, out_path)
         print(f'converted: {outname}')
