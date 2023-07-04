@@ -2,7 +2,7 @@
 GEE Feature in given year.
 Copy paste or open the file in QGIS editor and correct the year and
 change the variable "district" to required GEE Feature.
-execute the script to create a ECOSTRESS layer.
+execute the script to create a DynamicWorld layer.
 """
 import ee
 from ee_plugin import Map  # requires ee plugin installed in QGIS
