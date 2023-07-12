@@ -137,6 +137,27 @@ print(monthly_et)
 
 # summation of monthly images to generate annual image
 hyd_image = composites.sum()
+
+eco_max = ee.Number(hyd_image.reduceRegion(
+    reducer=ee.Reducer.max(), geometry=district.geometry(), scale=70
+).get('b1'))
+eco_min = ee.Number(hyd_image.reduceRegion(
+    reducer=ee.Reducer.min(), geometry=district.geometry(), scale=70
+).get('b1'))
+pet_max = ee.Number(PET_sum.reduceRegion(
+    reducer=ee.Reducer.max(), geometry=district.geometry(), scale=500
+).get('PET'))
+pet_min = ee.Number(PET_sum.reduceRegion(
+    reducer=ee.Reducer.min(), geometry=district.geometry(), scale=500
+).get('PET'))
+# convert the pixel values between 0 & 1
+# hyd_numera = ee.Image(hyd_image).subtract(eco_min)
+# hyd_denom = eco_max.subtract(eco_min)
+# hyd_image = hyd_numera.divide(hyd_denom)
+# pet_numera = ee.Image(PET_sum).subtract(pet_min)
+# pet_denom = pet_max.subtract(pet_min)
+# PET_sum = pet_numera.divide(pet_denom)
+
 eco_ratio = (hyd_image.divide(PET_sum)).multiply(100)
 
 # calculate minimum and maximum pixel values
