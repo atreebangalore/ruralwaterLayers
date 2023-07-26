@@ -34,31 +34,46 @@ filtered_collection = s2_collection.filterBounds(roi).filterDate(START_DATE, END
 total_area = roi.geometry().area()
 
 # Function to calculate the percentage of area covered by the mosaic
-def calculateMosaicCoverage(image):
+# def calculateMosaicCoverage(image):
     # Calculate the area covered by the image mosaic
-    area_covered = image.select(0).multiply(ee.Image.pixelArea()).gt(0).reduceRegion(ee.Reducer.sum(), roi, 70)
+    # area_covered = image.select(0).multiply(ee.Image.pixelArea()).gt(0).reduceRegion(ee.Reducer.sum(), roi, 70)
 
     # Calculate the percentage of area covered by the mosaic
-    percentage_coverage = ee.Number(area_covered.get(area_covered.keys().get(0))).divide(ee.Number(total_area)).multiply(100)
+    # percentage_coverage = ee.Number(area_covered.get(area_covered.keys().get(0))).divide(ee.Number(total_area)).multiply(100)
 
-    return image.set('percentage_coverage', percentage_coverage)
+    # return image.set('percentage_coverage', percentage_coverage)
 
 # Map over the filtered Image Collection to calculate mosaic coverage for each image
-collection_with_coverage = filtered_collection.map(calculateMosaicCoverage)
+# collection_with_coverage = filtered_collection.map(calculateMosaicCoverage)
 
 # Function to calculate the number of images per month and the average percentage coverage
 def countImagesAndCoverage(month):
     # Filter images for the specified month
-    images_for_month = collection_with_coverage.filter(ee.Filter.calendarRange(month, month, 'month'))
+    # images_for_month = collection_with_coverage.filter(ee.Filter.calendarRange(month, month, 'month'))
+    images_for_month = filtered_collection.filter(ee.Filter.calendarRange(month, month, 'month'))
+    
+    image = images_for_month.median().select(0)
+    # area_covered = image.select(0).multiply(ee.Image.pixelArea()).gt(0).reduceRegion(ee.Reducer.sum(), roi, 70)
+    # percentage_coverage = ee.Number(area_covered.get(area_covered.keys().get(0))).divide(ee.Number(total_area)).multiply(100)
+    process_image = image.gt(0).updateMask(image.gt(0)).clip(roi)
+    area_image = process_image.multiply(ee.Image.pixelArea())
+    area_covered = area_image.reduceRegion(
+        reducer= ee.Reducer.sum(),
+        geometry= roi.geometry(),
+        scale= 70,
+        maxPixels= 1e12
+    )
+    percentage_coverage = ee.Number(area_covered.get('b1')).divide(total_area).multiply(100)
 
     # Get the count of images for the month
     count = images_for_month.size()
 
     # Calculate the average percentage coverage for the month
-    coverage_sum = images_for_month.aggregate_sum('percentage_coverage')
-    coverage_avg = coverage_sum.divide(count)
+    # coverage_sum = images_for_month.aggregate_sum('percentage_coverage')
+    # coverage_avg = coverage_sum.divide(count)
 
-    return ee.Feature(None, {'Month': month, 'Number of Images': count, 'Percentage Coverage (%)': coverage_avg})
+    # return ee.Feature(None, {'Month': month, 'Number of Images': count, 'Percentage Coverage (%)': coverage_avg})
+    return ee.Feature(None, {'Month': month, 'Number of Images': count, 'Percentage Coverage (%)': percentage_coverage})
 
 # Get the distinct months in the collection
 months = ee.List.sequence(1, 12)
