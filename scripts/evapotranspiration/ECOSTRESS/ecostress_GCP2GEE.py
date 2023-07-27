@@ -51,7 +51,7 @@ def main():
     ee_img_col = 'users' + '/' + geeuser + '/' + geecoll
     print("ee image coll path: ",ee_img_col)
     
-    gs_command = 'gsutil ls ' + bucket + '*' + year + '*.tif'    # list gs tif files for particular year
+    gs_command = 'gsutil ls ' + bucket + '*_' + year + '*.tif'    # list gs tif files for particular year
     gs_tiffs = os.popen(gs_command,mode='r').read().strip().split('\n')
     print('Total number of files: {}'.format(len(gs_tiffs)))
     
@@ -64,7 +64,7 @@ def main():
         print("copying from GCP bucket: ",tif)
         suffix = 'ECO3ETPTJPL_001_EVAPOTRANSPIRATION_PT_JPL_ETdaily_' #20190113_014827'
         fbname = tif.replace(bucket, '').replace('.tif', '') # get image name
-        xDate = fbname.replace(suffix, '').split('_')[0]  # get YYYYMM01
+        xDate = fbname.replace(suffix, '').split('_')[0]  # get YYYYMMDD
         dt = datetime.strptime(xDate,"%Y%m%d").replace(tzinfo=timezone.utc).timestamp() * 1000    #.strftime("%Y-%m-%dT%H:%M:%S")
         print(xDate)
         print("setting property 'system:time_start' :", dt)
