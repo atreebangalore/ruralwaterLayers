@@ -43,6 +43,7 @@ s2_collection = ee.ImageCollection("users/jaltolwelllabs/ET/ecostress")
 
 # Filter the Image Collection by the region of interest and date range
 filtered_collection = s2_collection.filterBounds(roi).filterDate(START_DATE, END_DATE)
+print(f"total images found for the region: {filtered_collection.size().getInfo()}")
 
 # Total area of the ROI
 total_area = roi.geometry().area()
@@ -61,29 +62,47 @@ def countImagesAndCoverage(month: ee.Number) -> ee.Feature:
     images_for_month = filtered_collection.filter(
         ee.Filter.calendarRange(month, month, "month")
     )
-    image = images_for_month.median().select(0)
 
-    # process the image and get the area of ROI covered with pixels
-    process_image = image.gt(0).updateMask(image.gt(0)).clip(roi)
-    area_image = process_image.multiply(ee.Image.pixelArea())
-    area_covered = area_image.reduceRegion(
-        reducer=ee.Reducer.sum(), geometry=roi.geometry(), scale=70, maxPixels=1e12
-    )
-    # calculate the percentage of ROI covered by the Image
-    percentage_coverage = (
-        ee.Number(area_covered.get("b1")).divide(total_area).multiply(100)
-    )
+    def process(images_for_month):
+        image = images_for_month.median().select(0)
 
-    # Get the count of images for the month
-    count = images_for_month.size()
+        # process the image and get the area of ROI covered with pixels
+        process_image = image.gte(0).updateMask(image.gte(0)).clip(roi)
+        area_image = process_image.multiply(ee.Image.pixelArea())
+        area_covered = area_image.reduceRegion(
+            reducer=ee.Reducer.sum(), geometry=roi.geometry(), scale=70, maxPixels=1e12
+        )
+        # calculate the percentage of ROI covered by the Image
+        percentage_coverage = (
+            ee.Number(area_covered.get("b1")).divide(total_area).multiply(100)
+        )
 
-    return ee.Feature(
-        None,
-        {
-            "Month": month,
-            "Number of Images": count,
-            "Percentage Coverage (%)": percentage_coverage,
-        },
+        # Get the count of images for the month
+        count = images_for_month.size()
+
+        return ee.Feature(
+            None,
+            {
+                "Month": month,
+                "Number of Images": count,
+                "Percentage Coverage (%)": percentage_coverage,
+            },
+        )
+
+    def zero():
+        return ee.Feature(
+            None,
+            {
+                "Month": month,
+                "Number of Images": 0,
+                "Percentage Coverage (%)": 0,
+            },
+        )
+
+    return ee.Algorithms.If(
+        ee.Algorithms.IsEqual(images_for_month.size(), 0),
+        zero(),
+        process(images_for_month),
     )
 
 
