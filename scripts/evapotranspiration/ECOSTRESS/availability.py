@@ -1,79 +1,91 @@
-import ee
-ee.Initialize()
-from qgis.core import (
-    QgsJsonExporter,
-)
-from qgis.utils import iface
+"""Get the availability of ECOSTRESS for a layer in QGIS, number of images
+for a month and also the percentage area covered by the image over the 
+region for a month will be exported as CSV.
+Inputs:
+    - enter the year for which the availability is required
+    - load the vector file onto the QGIS workspace as the script will fetch
+    the boundary from the QGIS active layer
+"""
 import json
-import pandas as pd
 from pathlib import Path
 
+import ee
+import pandas as pd
+from qgis.core import QgsJsonExporter
+from qgis.utils import iface
+
+ee.Initialize()
+
+# input - enter the year (hydrological)
 YEAR = 2019
 
+# Boundary will be automatically fetched from the QGIS active layer
 active_lyr = iface.activeLayer()
 lyr_name = active_lyr.name()
 lyr = QgsJsonExporter(active_lyr)
 gs = lyr.exportFeatures(active_lyr.getFeatures())
 gj = json.loads(gs)
-for feature in gj['features']:
-    feature['id'] = f'{feature["id"]:04d}'
+for feature in gj["features"]:
+    feature["id"] = f'{feature["id"]:04d}'
 roi = ee.FeatureCollection(gj)
-dataFol = Path.home().joinpath("Data","et","ecostress")
-dataFol.mkdir(parents=True, exist_ok=True)
-out_file = dataFol.joinpath(f'{lyr_name}-{YEAR}.csv')
-print(f'layer to ee: {lyr_name}')
 
-START_DATE = f'{YEAR}-06-01'
-END_DATE = f'{YEAR+1}-06-01'
-# Define the Sentinel-2 Surface Reflectance Image Collection
-s2_collection = ee.ImageCollection('users/jaltolwelllabs/ET/ecostress')
+# Output location and file name to save
+dataFol = Path.home().joinpath("Data", "et", "ecostress")
+dataFol.mkdir(parents=True, exist_ok=True)
+out_file = dataFol.joinpath(f"{lyr_name}-{YEAR}.csv")
+print(f"layer to ee: {lyr_name}")
+
+START_DATE = f"{YEAR}-06-01"
+END_DATE = f"{YEAR+1}-06-01"
+
+# Define the ECOSTRESS Image Collection
+s2_collection = ee.ImageCollection("users/jaltolwelllabs/ET/ecostress")
 
 # Filter the Image Collection by the region of interest and date range
 filtered_collection = s2_collection.filterBounds(roi).filterDate(START_DATE, END_DATE)
 
+# Total area of the ROI
 total_area = roi.geometry().area()
 
-# Function to calculate the percentage of area covered by the mosaic
-# def calculateMosaicCoverage(image):
-    # Calculate the area covered by the image mosaic
-    # area_covered = image.select(0).multiply(ee.Image.pixelArea()).gt(0).reduceRegion(ee.Reducer.sum(), roi, 70)
 
-    # Calculate the percentage of area covered by the mosaic
-    # percentage_coverage = ee.Number(area_covered.get(area_covered.keys().get(0))).divide(ee.Number(total_area)).multiply(100)
+def countImagesAndCoverage(month: ee.Number) -> ee.Feature:
+    """Function to calculate the number of images per month and percentage coverage
 
-    # return image.set('percentage_coverage', percentage_coverage)
+    Args:
+        month (ee.Number): Month as int
 
-# Map over the filtered Image Collection to calculate mosaic coverage for each image
-# collection_with_coverage = filtered_collection.map(calculateMosaicCoverage)
-
-# Function to calculate the number of images per month and the average percentage coverage
-def countImagesAndCoverage(month):
-    # Filter images for the specified month
-    # images_for_month = collection_with_coverage.filter(ee.Filter.calendarRange(month, month, 'month'))
-    images_for_month = filtered_collection.filter(ee.Filter.calendarRange(month, month, 'month'))
-    
+    Returns:
+        ee.Feature: Null geometry feature with count and percentage coverage
+    """
+    # Filter images for the specified month and mosaic
+    images_for_month = filtered_collection.filter(
+        ee.Filter.calendarRange(month, month, "month")
+    )
     image = images_for_month.median().select(0)
-    # area_covered = image.select(0).multiply(ee.Image.pixelArea()).gt(0).reduceRegion(ee.Reducer.sum(), roi, 70)
-    # percentage_coverage = ee.Number(area_covered.get(area_covered.keys().get(0))).divide(ee.Number(total_area)).multiply(100)
+
+    # process the image and get the area of ROI covered with pixels
     process_image = image.gt(0).updateMask(image.gt(0)).clip(roi)
     area_image = process_image.multiply(ee.Image.pixelArea())
     area_covered = area_image.reduceRegion(
-        reducer= ee.Reducer.sum(),
-        geometry= roi.geometry(),
-        scale= 70,
-        maxPixels= 1e12
+        reducer=ee.Reducer.sum(), geometry=roi.geometry(), scale=70, maxPixels=1e12
     )
-    percentage_coverage = ee.Number(area_covered.get('b1')).divide(total_area).multiply(100)
+    # calculate the percentage of ROI covered by the Image
+    percentage_coverage = (
+        ee.Number(area_covered.get("b1")).divide(total_area).multiply(100)
+    )
 
     # Get the count of images for the month
     count = images_for_month.size()
 
-    # Calculate the average percentage coverage for the month
-    # coverage_sum = images_for_month.aggregate_sum('percentage_coverage')
-    # coverage_avg = coverage_sum.divide(count)
+    return ee.Feature(
+        None,
+        {
+            "Month": month,
+            "Number of Images": count,
+            "Percentage Coverage (%)": percentage_coverage,
+        },
+    )
 
-    # return ee.Feature(None, {'Month': month, 'Number of Images': count, 'Percentage Coverage (%)': coverage_avg})
-    return ee.Feature(None, {'Month': month, 'Number of Images': count, 'Percentage Coverage (%)': percentage_coverage})
 
 # Get the distinct months in the collection
 months = ee.List.sequence(1, 12)
@@ -82,11 +94,18 @@ months = ee.List.sequence(1, 12)
 monthly_image_coverage = ee.FeatureCollection(months.map(countImagesAndCoverage))
 
 # Convert the Earth Engine FeatureCollection to a Pandas DataFrame
-fetched = {i['properties']['Month']: i['properties'] for i in monthly_image_coverage.getInfo()['features']}
+fetched = {
+    i["properties"]["Month"]: i["properties"]
+    for i in monthly_image_coverage.getInfo()["features"]
+}
 df = pd.DataFrame(fetched).T
-df['Month'] = df['Month'].astype(int).apply(lambda x: f'{YEAR}-{x:02d}' if x>5 else f'{YEAR+1}-{x:02d}')
-df.sort_values(by=['Month'], inplace=True)
+df["Month"] = (
+    df["Month"]
+    .astype(int)
+    .apply(lambda x: f"{YEAR}-{x:02d}" if x > 5 else f"{YEAR+1}-{x:02d}")
+)
+df.sort_values(by=["Month"], inplace=True)
 
 # Export the DataFrame to a CSV file
 df.to_csv(out_file, index=False)
-print(f'output: {out_file}')
+print(f"output: {out_file}")
