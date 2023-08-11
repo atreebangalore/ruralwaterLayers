@@ -42,4 +42,25 @@ Map.addLayer(
     {"max": 100, "bands": ["classification"], "palette": ["blue"]},
     "esa_cereal",
 )
+
+
+# Calculate the area of irrigation and rainfed classes in the boundary
+def get_area(image, feature, band_num, scale_val, band_name):
+    class_image = image.eq(band_num)
+    area_image = class_image.multiply(ee.Image.pixelArea())
+    area = area_image.reduceRegion(
+        reducer=ee.Reducer.sum(),
+        geometry=feature.geometry(),
+        scale=scale_val,
+        maxPixels=1e12,
+    )
+    return area.get(band_name).getInfo()
+
+
+print(f'LGRIP irrigated area: {get_area(lgrip_image, roi, 2, 30, "b1")}')
+print(f'LGRIP rainfed area: {get_area(lgrip_image, roi, 3, 30, "b1")}')
+print(
+    f'ESA WorldCereal irrigated area: {get_area(esa_image, roi, 100, 10, "classification")}'
+)
+
 print("completed!")
