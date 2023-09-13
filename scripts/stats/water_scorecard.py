@@ -28,6 +28,12 @@ def lyr2ee(active_lyr):
     else:
         return convert2ee(active_lyr, active_lyr.getFeatures())
 
+def fc_area(roi):
+    area = ee.Number(roi.geometry().area()).getInfo()
+    areaSqKm = round(area/1e6)
+    print(f'area of ROI: {round(area, 2)} m2')
+    return area, areaSqKm
+
 def building_count(roi):
     buildings = buildingsCol.filter(ee.Filter.bounds(roi.geometry()))
     return buildings.size().getInfo()
@@ -41,7 +47,8 @@ def hh_requirement(roi):
     print(f'considering LPCD of {lpcd} litres')
     water = round(55 * 0.05 * 365, 2)
     print(f'amount of water per person per year is {water} cubic meters')
-    return round((hh_count * persons * water)/1e6, 3)
+    domestic_m3 = hh_count * persons * water
+    return round(domestic_m3, 3), round(domestic_m3/1e6, 3)
 
 def get_rainfall(start_date, end_date, roi):
     sum_image = imdrain.filterDate(start_date, end_date).sum()
@@ -49,10 +56,13 @@ def get_rainfall(start_date, end_date, roi):
 
 def renewable_water_req(start_date, end_date, roi):
     rain_mm = get_rainfall(start_date, end_date, roi)
-    print(f'rainfall in mm: {rain_mm}')
+    print(f'rainfall in mm: {round(rain_mm,2)}')
     cgwb_coeff = 0.2
     print(f'considering CGWB coefficient as {cgwb_coeff*100}%')
-    return round(cgwb_coeff * rain_mm, 2)
+    renewable_mm = cgwb_coeff * rain_mm
+    area_m2, _ = fc_area(roi)
+    renewable_m3 = area_m2*(renewable_mm/1000)
+    return round(renewable_mm, 2), round(renewable_m3, 3), round(renewable_m3/1e6, 3)
 
 def main(year):
     print(f'input year: {year}')
@@ -64,9 +74,12 @@ def main(year):
     lyr_name = active_lyr.name()
     print(f'Active Layer: {lyr_name}')
     roi = lyr2ee(active_lyr)
-    domestic_req = hh_requirement(roi)
-    print(f'-> Domestic HH requirement: {domestic_req} MCM')
-    renewable_water = renewable_water_req(start_date, end_date, roi)
-    print(f'-> Renewable water by CGWB is {renewable_water} mm')
+    domestic_m3, domestic_mcm = hh_requirement(roi)
+    print(f'Domestic HH requirement: {domestic_m3} cubic meters')
+    print(f'-> Domestic HH requirement: {domestic_mcm} MCM')
+    renewable_mm, renewable_m3, renewable_mcm = renewable_water_req(start_date, end_date, roi)
+    print(f'Renewable water by CGWB is {renewable_mm} mm')
+    print(f'Renewable water by CGWB is {renewable_m3} cubic meters')
+    print(f'-> Renewable water by CGWB is {renewable_mcm} MCM')
 
 main(2021)
