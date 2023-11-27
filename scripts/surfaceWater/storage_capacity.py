@@ -16,28 +16,21 @@ def point_layer(latitude, longitude):
     print(f'creating point layer for latitude {latitude} and longitude {longitude}')
     # Create a point
     point = QgsPointXY(longitude, latitude)
-
     # Create a memory layer to store the point
     layer = QgsVectorLayer('Point?crs=EPSG:4326', 'my_point', 'memory')
     pr = layer.dataProvider()
-
     # Add attribute fields (optional)
     fields = [QgsField('Longitude', QVariant.Double), QgsField('Latitude', QVariant.Double)]
-
     pr.addAttributes(fields)
     layer.updateFields()
-
     # Create a new feature
     feature = QgsFeature()
     feature.setGeometry(QgsGeometry.fromPointXY(point))
     feature.setAttributes([longitude, latitude])
-
     # Add the feature to the layer
     pr.addFeature(feature)
-
     # Update Extent (optional)
     layer.updateExtents()
-
     # Add the layer to the map
     QgsProject.instance().addMapLayer(layer)
     print('point layer added.')
@@ -62,11 +55,66 @@ def catchment_delineation(lat, long, drain_dir_path):
     output_layer_id = result['output']
     processing2lyr(output_layer_id, 'catchment_delineated')
     print('catchment delineation completed.')
+    return output_layer_id
 
-def main():
+def catchment_polygonize(catchment_raster_path):
+    print('processing catchment raster to vector')
+    params = {'INPUT':catchment_raster_path,
+            'BAND':1,
+            'FIELD':'val',
+            'EIGHT_CONNECTEDNESS':False,
+            'EXTRA':'',
+            'OUTPUT':'TEMPORARY_OUTPUT'}
+    result = processing.run("gdal:polygonize", params)
+    output_layer_id = result['OUTPUT']
+    processing2lyr(output_layer_id, 'catchment_polygonized')
+    print('catchment polygonization completed.')
+    return output_layer_id
+
+def mask_dem(dem_path, polygon_path):
+    print('processing elevation raster masking by catchment vector')
+    params = {'INPUT':dem_path,
+              'MASK':polygon_path,
+              'SOURCE_CRS':None,
+              'TARGET_CRS':None,
+              'TARGET_EXTENT':None,
+              'NODATA':None,
+              'ALPHA_BAND':False,
+              'CROP_TO_CUTLINE':False,
+              'KEEP_RESOLUTION':False,
+              'SET_RESOLUTION':False,
+              'X_RESOLUTION':None,
+              'Y_RESOLUTION':None,
+              'MULTITHREADING':False,
+              'OPTIONS':'',
+              'DATA_TYPE':0,
+              'EXTRA':'',
+              'OUTPUT':'TEMPORARY_OUTPUT'}
+    result = processing.run("gdal:cliprasterbymasklayer", params)
+    output_layer_id = result['OUTPUT']
+    processing2lyr(output_layer_id, 'elevation_masked')
+    print('masking elevation to catchment completed.')
+    return output_layer_id
+
+def dem_polygonize(masked_elev_path):
+    print('processing elevation masked raster to polygons')
+    params = {'INPUT_RASTER':masked_elev_path,
+              'RASTER_BAND':1,
+              'FIELD_NAME':'VALUE',
+              'OUTPUT':'TEMPORARY_OUTPUT'}
+    result = processing.run("native:pixelstopolygons", params)
+    output_layer = result['OUTPUT']
+    QgsProject.instance().addMapLayer(output_layer)
+    output_layer.setName('elevation_polygonized')
+    print('polygonizing masked elevation completed.')
+
+def main(dem, drain_dir):
     point_layer(lat, long)
-    catchment_delineation(lat, long, fabdem_drain_dir)
+    catchment_raster_path = catchment_delineation(lat, long, drain_dir)
+    catchment_poly_path = catchment_polygonize(catchment_raster_path)
+    masked_elev_path = mask_dem(dem, catchment_poly_path)
+    dem_polygonize(masked_elev_path)
 
 print('started...')
-main()
+main(fabdem, fabdem_drain_dir)
 print('completed!!!')
