@@ -1,6 +1,6 @@
 from qgis.core import QgsJsonExporter
 from qgis.utils import iface
-from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsWkbTypes, QgsCoordinateReferenceSystem, QgsProcessingUtils, QgsProcessingContext
+from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsWkbTypes, QgsCoordinateReferenceSystem, QgsProcessingUtils, QgsProcessingContext, QgsRasterLayer
 from PyQt5.QtCore import QVariant
 from qgis import processing
 
@@ -14,26 +14,20 @@ fabdem_drain_dir = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis
 
 def point_layer(latitude, longitude):
     print(f'creating point layer for latitude {latitude} and longitude {longitude}')
-    # Create a point
     point = QgsPointXY(longitude, latitude)
-    # Create a memory layer to store the point
     layer = QgsVectorLayer('Point?crs=EPSG:4326', 'my_point', 'memory')
     pr = layer.dataProvider()
-    # Add attribute fields (optional)
     fields = [QgsField('Longitude', QVariant.Double), QgsField('Latitude', QVariant.Double)]
     pr.addAttributes(fields)
     layer.updateFields()
-    # Create a new feature
     feature = QgsFeature()
     feature.setGeometry(QgsGeometry.fromPointXY(point))
     feature.setAttributes([longitude, latitude])
-    # Add the feature to the layer
     pr.addFeature(feature)
-    # Update Extent (optional)
     layer.updateExtents()
-    # Add the layer to the map
     QgsProject.instance().addMapLayer(layer)
     print('point layer added.')
+    return layer
 
 def processing2lyr(output_layer_id, lyr_name):
     context = QgsProcessingContext()
@@ -96,6 +90,18 @@ def mask_dem(dem_path, polygon_path):
     print('masking elevation to catchment completed.')
     return output_layer_id
 
+def low_elev_point(pt_lyr, masked_elev_path):
+    print('processing lowerst elevation pixel')
+    params = {'INPUT':pt_lyr.source(),
+     'RASTERCOPY':masked_elev_path,
+     'COLUMN_PREFIX':'SAMPLE_',
+     'OUTPUT':'TEMPORARY_OUTPUT'}
+    result = processing.run("native:rastersampling", params)
+    output_layer = result['OUTPUT']
+    elevation_value = [feature['SAMPLE_1'] for feature in output_layer.getFeatures()][0]
+    print(f'lowest elevation value = {round(elevation_value,2)}m')
+    return elevation_value
+
 def dem_polygonize(masked_elev_path):
     print('processing elevation masked raster to polygons')
     params = {'INPUT_RASTER':masked_elev_path,
@@ -109,11 +115,12 @@ def dem_polygonize(masked_elev_path):
     print('polygonizing masked elevation completed.')
 
 def main(dem, drain_dir):
-    point_layer(lat, long)
+    pt_lyr = point_layer(lat, long)
     catchment_raster_path = catchment_delineation(lat, long, drain_dir)
     catchment_poly_path = catchment_polygonize(catchment_raster_path)
     masked_elev_path = mask_dem(dem, catchment_poly_path)
     dem_polygonize(masked_elev_path)
+    lowest_elev = low_elev_point(pt_lyr, masked_elev_path)
 
 print('started...')
 main(fabdem, fabdem_drain_dir)
