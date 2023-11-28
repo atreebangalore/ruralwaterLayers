@@ -1,6 +1,6 @@
 from qgis.core import QgsJsonExporter
 from qgis.utils import iface
-from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsWkbTypes, QgsCoordinateReferenceSystem, QgsProcessingUtils, QgsProcessingContext, QgsRasterLayer
+from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsWkbTypes, QgsCoordinateReferenceSystem, QgsProcessingUtils, QgsProcessingContext, QgsRasterLayer, QgsExpression, QgsVectorLayerCache, QgsFeatureRequest
 from PyQt5.QtCore import QVariant
 from qgis import processing
 
@@ -106,21 +106,53 @@ def dem_polygonize(masked_elev_path):
     print('processing elevation masked raster to polygons')
     params = {'INPUT_RASTER':masked_elev_path,
               'RASTER_BAND':1,
-              'FIELD_NAME':'VALUE',
+              'FIELD_NAME':'elevation',
               'OUTPUT':'TEMPORARY_OUTPUT'}
     result = processing.run("native:pixelstopolygons", params)
     output_layer = result['OUTPUT']
-    QgsProject.instance().addMapLayer(output_layer)
-    output_layer.setName('elevation_polygonized')
     print('polygonizing masked elevation completed.')
+    return output_layer
+
+def calculate_depth(lowest_elev, eff_height, elev_lyr):
+    print('Calculation of depth based on elevation being carried out')
+    elev_lyr.dataProvider().addAttributes([QgsField('depth', QVariant.Double)])
+    elev_lyr.updateFields()
+    depth_col = elev_lyr.fields().lookupField('depth')
+    for f in elev_lyr.getFeatures():
+        col_val = lowest_elev + eff_height - f['elevation']
+        elev_lyr.dataProvider().changeAttributeValues({f.id(): {depth_col: col_val}})
+    QgsProject.instance().addMapLayer(elev_lyr)
+    elev_lyr.setName('elevation_polygonized')
+    return elev_lyr
+
+def pond_pixels(elev_lyr, eff_height):
+    print('extracting pond pixels for the structure')
+    expression = QgsExpression(f'"depth" > 0 AND "depth" < {eff_height+1}')
+    elev_lyr.setSubsetString(expression.expression())
+    pond_layer = QgsVectorLayer("Polygon?crs=EPSG:4326", "pond_pixels", "memory")
+    provider = pond_layer.dataProvider()
+    pond_layer.startEditing()
+    fields = elev_lyr.fields()
+    for field in fields:
+        provider.addAttributes([field])
+    pond_layer.updateFields()
+    for feature in elev_lyr.getFeatures():
+        pond_layer.addFeature(feature)
+    QgsProject.instance().addMapLayer(pond_layer)
+    pond_layer.commitChanges(stopEditing=True)
+    elev_lyr.setSubsetString('')
+    print('pond pixels layer created')
+    return pond_layer
 
 def main(dem, drain_dir):
     pt_lyr = point_layer(lat, long)
     catchment_raster_path = catchment_delineation(lat, long, drain_dir)
     catchment_poly_path = catchment_polygonize(catchment_raster_path)
     masked_elev_path = mask_dem(dem, catchment_poly_path)
-    dem_polygonize(masked_elev_path)
     lowest_elev = low_elev_point(pt_lyr, masked_elev_path)
+    elev_lyr = dem_polygonize(masked_elev_path)
+    elev_lyr = calculate_depth(lowest_elev, eff_height, elev_lyr)
+    pond_lyr = pond_pixels(elev_lyr, eff_height)
 
 print('started...')
 main(fabdem, fabdem_drain_dir)
