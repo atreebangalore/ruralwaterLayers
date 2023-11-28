@@ -8,6 +8,7 @@ lat = 27.86915
 long = 76.91920
 eff_height = 2.99
 
+fabdem_px = 30 # pixel size
 fabdem = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Elevation_FABDEM.tif'
 fabdem_flow_acc = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Flow_Accumulation_FABDEM.tif'
 fabdem_drain_dir = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Drainage_Direction_FABDEM.tif'
@@ -113,7 +114,7 @@ def dem_polygonize(masked_elev_path):
     print('polygonizing masked elevation completed.')
     return output_layer
 
-def calculate_depth(lowest_elev, eff_height, elev_lyr):
+def calc_depth(lowest_elev, eff_height, elev_lyr):
     print('Calculation of depth based on elevation being carried out')
     elev_lyr.dataProvider().addAttributes([QgsField('depth', QVariant.Double)])
     elev_lyr.updateFields()
@@ -144,16 +145,24 @@ def pond_pixels(elev_lyr, eff_height):
     print('pond pixels layer created')
     return pond_layer
 
-def main(dem, drain_dir):
+def calc_volume(pond_lyr, px_size):
+    print('calculating the volume of water columns')
+    px_list = [f['depth'] for f in pond_lyr.getFeatures()]
+    volume = sum(px_list) * px_size * px_size
+    print(f'volume is {round(volume,2)} m3')
+    print(f'capacity of storage is {round(volume/10000,2)} crore litres')
+
+def main(dem, drain_dir, px_size):
     pt_lyr = point_layer(lat, long)
     catchment_raster_path = catchment_delineation(lat, long, drain_dir)
     catchment_poly_path = catchment_polygonize(catchment_raster_path)
     masked_elev_path = mask_dem(dem, catchment_poly_path)
     lowest_elev = low_elev_point(pt_lyr, masked_elev_path)
     elev_lyr = dem_polygonize(masked_elev_path)
-    elev_lyr = calculate_depth(lowest_elev, eff_height, elev_lyr)
+    elev_lyr = calc_depth(lowest_elev, eff_height, elev_lyr)
     pond_lyr = pond_pixels(elev_lyr, eff_height)
+    calc_volume(pond_lyr, px_size)
 
 print('started...')
-main(fabdem, fabdem_drain_dir)
+main(fabdem, fabdem_drain_dir, fabdem_px)
 print('completed!!!')
