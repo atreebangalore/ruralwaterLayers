@@ -1,19 +1,42 @@
-from qgis.core import QgsJsonExporter
-from qgis.utils import iface
-from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsWkbTypes, QgsCoordinateReferenceSystem, QgsProcessingUtils, QgsProcessingContext, QgsRasterLayer, QgsExpression, QgsVectorLayerCache, QgsFeatureRequest
+"""This script calculates the amount of water that can be stored by a structure
+based on the elevation dataset. The inputs required are the latitude, longitude
+and effective height of the structure to be entered in the script below and
+the script should be executed in the QGIS workspace, please do change the 
+paths for the location of the respective elevation files.
+
+Raises:
+    ValueError: raised when the elevation dataset name is not provided correctly
+
+Returns:
+    float: volume of water that can be stored by the structure
+"""
 from PyQt5.QtCore import QVariant
 from qgis import processing
+from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
 
+# input (change for each structure)
 lat = 27.86915
 long = 76.91920
 eff_height = 2.99
 
+# config for the location of required files
 fabdem_px = 30 # pixel size
 fabdem = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Elevation_FABDEM.tif'
 fabdem_flow_acc = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Flow_Accumulation_FABDEM.tif'
 fabdem_drain_dir = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Drainage_Direction_FABDEM.tif'
 
-def point_layer(latitude, longitude):
+# don't change anything after this line
+def point_layer(latitude: float, longitude: float) -> QgsVectorLayer:
+    """
+    Create a point layer at the specified latitude and longitude.
+
+    Parameters:
+    - latitude (float): Latitude of the point.
+    - longitude (float): Longitude of the point.
+
+    Returns:
+    QgsVectorLayer: Created point layer.
+    """
     print(f'creating point layer for latitude {latitude} and longitude {longitude}')
     point = QgsPointXY(longitude, latitude)
     layer = QgsVectorLayer('Point?crs=EPSG:4326', 'my_point', 'memory')
@@ -30,14 +53,32 @@ def point_layer(latitude, longitude):
     print('point layer added.')
     return layer
 
-def processing2lyr(output_layer_id, lyr_name):
+def processing2lyr(output_layer_id: str, lyr_name: str) -> None:
+    """
+    Add a processing output layer to the QGIS map.
+
+    Parameters:
+    - output_layer_id (str): ID of the processing output layer.
+    - lyr_name (str): Name to be assigned to the layer.
+    """
     context = QgsProcessingContext()
     output_layer = QgsProcessingUtils.mapLayerFromString(output_layer_id, context)
     # Add the output layer to the QGIS map
     QgsProject.instance().addMapLayer(output_layer)
     output_layer.setName(lyr_name)
 
-def catchment_delineation(lat, long, drain_dir_path):
+def catchment_delineation(lat: float, long: float, drain_dir_path: str) -> str:
+    """
+    Perform catchment delineation using r.water.outlet processing algorithm.
+
+    Parameters:
+    - lat (float): Latitude of the outlet point.
+    - long (float): Longitude of the outlet point.
+    - drain_dir_path (str): Path to the drainage direction raster.
+
+    Returns:
+    str: ID of the output catchment layer.
+    """
     print('processing the r.water.outlet for catchment layer')
     params = {'GRASS_RASTER_FORMAT_META' : '',
             'GRASS_RASTER_FORMAT_OPT' : '',
@@ -52,7 +93,16 @@ def catchment_delineation(lat, long, drain_dir_path):
     print('catchment delineation completed.')
     return output_layer_id
 
-def catchment_polygonize(catchment_raster_path):
+def catchment_polygonize(catchment_raster_path: str) -> str:
+    """
+    Polygonize the catchment raster using the gdal:polygonize processing algorithm.
+
+    Parameters:
+    - catchment_raster_path (str): Path to the catchment raster.
+
+    Returns:
+    str: ID of the output vector layer.
+    """
     print('processing catchment raster to vector')
     params = {'INPUT':catchment_raster_path,
             'BAND':1,
@@ -66,7 +116,17 @@ def catchment_polygonize(catchment_raster_path):
     print('catchment polygonization completed.')
     return output_layer_id
 
-def mask_dem(dem_path, polygon_path):
+def mask_dem(dem_path: str, polygon_path: str) -> str:
+    """
+    Mask the elevation raster using the catchment vector layer.
+
+    Parameters:
+    - dem_path (str): Path to the elevation raster.
+    - polygon_path (str): Path to the catchment vector layer.
+
+    Returns:
+    str: ID of the output raster layer.
+    """
     print('processing elevation raster masking by catchment vector')
     params = {'INPUT':dem_path,
               'MASK':polygon_path,
@@ -91,7 +151,17 @@ def mask_dem(dem_path, polygon_path):
     print('masking elevation to catchment completed.')
     return output_layer_id
 
-def low_elev_point(pt_lyr, masked_elev_path):
+def low_elev_point(pt_lyr: QgsVectorLayer, masked_elev_path: str) -> float:
+    """
+    Extract the elevation of the lowest point within the catchment.
+
+    Parameters:
+    - pt_lyr (QgsVectorLayer): Point layer representing the outlet.
+    - masked_elev_path (str): Path to the masked elevation raster.
+
+    Returns:
+    float: Elevation of the lowest point.
+    """
     print('processing lowerst elevation pixel')
     params = {'INPUT':pt_lyr.source(),
      'RASTERCOPY':masked_elev_path,
@@ -103,7 +173,16 @@ def low_elev_point(pt_lyr, masked_elev_path):
     print(f'lowest elevation value = {round(elevation_value,2)}m')
     return elevation_value
 
-def dem_polygonize(masked_elev_path):
+def dem_polygonize(masked_elev_path: str) -> QgsVectorLayer:
+    """
+    Polygonize the masked elevation raster.
+
+    Parameters:
+    - masked_elev_path (str): Path to the masked elevation raster.
+
+    Returns:
+    QgsVectorLayer: Polygonized vector layer.
+    """
     print('processing elevation masked raster to polygons')
     params = {'INPUT_RASTER':masked_elev_path,
               'RASTER_BAND':1,
@@ -114,7 +193,18 @@ def dem_polygonize(masked_elev_path):
     print('polygonizing masked elevation completed.')
     return output_layer
 
-def calc_depth(lowest_elev, eff_height, elev_lyr):
+def calc_depth(lowest_elev: float, eff_height: float, elev_lyr: QgsVectorLayer) -> QgsVectorLayer:
+    """
+    Calculate the depth based on the elevation.
+
+    Parameters:
+    - lowest_elev (float): Elevation of the lowest point.
+    - eff_height (float): Effective height.
+    - elev_lyr (QgsVectorLayer): Elevation vector layer.
+
+    Returns:
+    QgsVectorLayer: Updated elevation vector layer.
+    """
     print('Calculation of depth based on elevation being carried out')
     elev_lyr.dataProvider().addAttributes([QgsField('depth', QVariant.Double)])
     elev_lyr.updateFields()
@@ -126,7 +216,17 @@ def calc_depth(lowest_elev, eff_height, elev_lyr):
     elev_lyr.setName('elevation_polygonized')
     return elev_lyr
 
-def pond_pixels(elev_lyr, eff_height):
+def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float) -> QgsVectorLayer:
+    """
+    Extract pond pixels for the structure.
+
+    Parameters:
+    - elev_lyr (QgsVectorLayer): Elevation vector layer.
+    - eff_height (float): Effective height.
+
+    Returns:
+    QgsVectorLayer: Pond pixels vector layer.
+    """
     print('extracting pond pixels for the structure')
     expression = QgsExpression(f'"depth" > 0 AND "depth" < {eff_height+1}')
     elev_lyr.setSubsetString(expression.expression())
@@ -145,14 +245,33 @@ def pond_pixels(elev_lyr, eff_height):
     print('pond pixels layer created')
     return pond_layer
 
-def calc_volume(pond_lyr, px_size):
+def calc_volume(pond_lyr: QgsVectorLayer, px_size: int) -> None:
+    """
+    Calculate the volume of water columns.
+
+    Parameters:
+    - pond_lyr (QgsVectorLayer): Pond pixels vector layer.
+    - px_size (int): Pixel size.
+    """
     print('calculating the volume of water columns')
     px_list = [f['depth'] for f in pond_lyr.getFeatures()]
     volume = sum(px_list) * px_size * px_size
     print(f'volume is {round(volume,2)} m3')
     print(f'capacity of storage is {round(volume/10000,2)} crore litres')
 
-def main(dem, drain_dir, px_size):
+def main(data: str) -> None:
+    """
+    Main function to process data.
+
+    Parameters:
+    - data (str): Dataset identifier.
+    """
+    if data == 'fabdem':
+        dem = fabdem
+        drain_dir = fabdem_drain_dir
+        px_size = fabdem_px
+    else:
+        raise ValueError('mention the dataset used!')
     pt_lyr = point_layer(lat, long)
     catchment_raster_path = catchment_delineation(lat, long, drain_dir)
     catchment_poly_path = catchment_polygonize(catchment_raster_path)
@@ -164,5 +283,5 @@ def main(dem, drain_dir, px_size):
     calc_volume(pond_lyr, px_size)
 
 print('started...')
-main(fabdem, fabdem_drain_dir, fabdem_px)
+main('fabdem')
 print('completed!!!')
