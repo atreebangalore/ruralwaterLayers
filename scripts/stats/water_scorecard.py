@@ -9,23 +9,13 @@ from qgis.utils import iface
 
 #input
 YEAR = 2019
+KHARIF_START_MONTH = 6
+RABI_START_MONTH = 10
+ZAID_START_MONTH = 2
 persons_per_hh = 4
 lpcd = 55
 NDVI_THRESHOLD = 0.2
 BACKLOG_YEARS = 5
-
-def season_dict(year):
-    return {
-        'kharif_start' : f'{year}-06-01', # June of YEAR
-        'kharif_end' : f'{year}-10-01', # September of YEAR
-        'rabi_start' : f'{year}-10-01', # October of YEAR
-        'rabi_end' : f'{year+1}-02-01', # January of YEAR+1
-        'zaid_start' : f'{year+1}-02-01', # February of YEAR+1
-        'zaid_end' : f'{year+1}-06-01', # May of YEAR+1
-    }
-
-def year_range(year, no_of_years):
-    return list(range(year,year-no_of_years,-1))
 
 # Initialize Earth Engine
 ee.Initialize()
@@ -43,6 +33,19 @@ if YEAR >= 2021:
 else:
     modisET = ee.ImageCollection("MODIS/006/MOD16A2")
 DW_CROP_LABEL = 4
+
+def season_dict(year):
+    return {
+        'kharif_start' : f'{year}-{KHARIF_START_MONTH:02d}-01', # June of YEAR
+        'kharif_end' : f'{year}-{RABI_START_MONTH:02d}-01', # September of YEAR
+        'rabi_start' : f'{year}-{RABI_START_MONTH:02d}-01', # October of YEAR
+        'rabi_end' : f'{year+1}-{ZAID_START_MONTH:02d}-01', # January of YEAR+1
+        'zaid_start' : f'{year+1}-{ZAID_START_MONTH:02d}-01', # February of YEAR+1
+        'zaid_end' : f'{year+1}-{KHARIF_START_MONTH:02d}-01', # May of YEAR+1
+    }
+
+def year_range(year, no_of_years):
+    return list(range(year,year-no_of_years,-1))
 
 def lyr2ee(active_lyr):
     print(f'Active Layer: {active_lyr.name()}')
@@ -141,8 +144,8 @@ def resilience_indicator(area_dict):
     return min_val/max_val
 
 def mo_yr_seq(year):
-    monthseq = list(range(6, 13)) + list(range(1, 6))
-    yearseq = [year]*7 + [year+1]*5
+    monthseq = list(range(KHARIF_START_MONTH, 13)) + list(range(1, KHARIF_START_MONTH))
+    yearseq = [year]*(13-KHARIF_START_MONTH) + [year+1]*(KHARIF_START_MONTH-1)
     return [*zip(yearseq, monthseq)]
 
 def get_refET(geometry, year):
@@ -158,7 +161,54 @@ def get_refET(geometry, year):
             scale=100,
             maxPixels=1e10
         ).getInfo()['b1']
+    print(f'ref crop ET - ET0 {year}: {ETo_dict}')
     return ETo_dict
+
+def get_ET(start_date, end_date, roi):
+    dw = dwCol.filterDate(start_date, end_date).filterBounds(roi).select(['label']).mode()
+    et = modisET.filterDate(start_date, end_date).select(['ET']).filterBounds(roi).sum()
+    crop_et_mask = et.updateMask(dw.eq(4))
+    crop_et = crop_et_mask.reduceRegion(ee.Reducer.mean(),roi,500).getInfo()['ET']
+    print(f'MODIS crop ET (mm): {crop_et}')
+    return crop_et
+
+def get_rainfall(roi, year):
+    P_dict = {}  # {month: ETo}
+    monthyearseq = mo_yr_seq(year)
+    for period in monthyearseq:
+        y, m = period
+        image = imdrain.filterDate(ee.Date.fromYMD(
+            y, m, 1).getRange('month')).sum()
+        P_dict[f'{m:02d}'] = image.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=roi,
+            scale=1000,
+            maxPixels=1e10
+        ).getInfo()['b1']
+    print(f'Rainfall {year} (mm): {P_dict}')
+    return P_dict
+
+def get_eff_rainfall_m3(year, area_m2, rain_mm_dict):
+    rain_dict = rain_mm_dict.copy()
+    for k,v in rain_dict.items():
+        if v>75:
+            rain_dict[k] = (((0.8*v) - 25)/1000) * area_m2
+        else:
+            val = (((0.6*v) - 10)/1000) * area_m2
+            rain_dict[k] = val if val>0 else 0
+    print(f'eff rainfall {year} (m3): {rain_dict}')
+    return rain_dict
+
+def crop_water(roi, year, area_m2, rain_mm_dict):
+    ref_ET = get_refET(roi, year)
+    rain_m3 = get_eff_rainfall_m3(year, area_m2, rain_mm_dict)
+
+def availability_indicator_2(roi, year, rain_mm_dict):
+    modis_ET = get_ET(season_dict(year)['kharif_start'], season_dict(year)['zaid_end'], roi)
+    rain_mm = sum(rain_mm_dict.values())
+    print(f'rain sum dict: {rain_mm_dict}')
+    print(f'rainfall (mm): {rain_mm}')
+    return modis_ET/rain_mm
 
 def main(year):
     # Boundary will be automatically fetched from the QGIS active layer
@@ -180,5 +230,11 @@ def main(year):
     
     #Availability Indicator
     domestic_m3, domestic_mcm = hh_requirement(roi)
+    rain_mm_dict = get_rainfall(roi, year)
+    # method 1
+    cwr_m2 = crop_water(roi, year, geo_m2, rain_mm_dict)
+    #method 2
+    availability_2 = availability_indicator_2(roi, year, rain_mm_dict)
+    print(f'Avaiability Indicator (method 2): {round(availability_2,2)}')
 
 main(YEAR)
