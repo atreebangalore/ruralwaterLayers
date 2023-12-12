@@ -12,21 +12,23 @@ Returns:
 """
 from PyQt5.QtCore import QVariant
 from qgis import processing
-from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
+from qgis.core import QgsProject, QgsVectorLayer, QgsSpatialIndex, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
 
 # input (change for each structure)
-lat = 27.86915
-long = 76.91920
-eff_height = 2.99
+latitude = 27.82714
+longitude = 76.90120
+eff_height = 3.47
 
 # config for the location of required files
 fabdem_px = 30 # pixel size
-fabdem = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Elevation_FABDEM.tif'
-fabdem_flow_acc = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Flow_Accumulation_FABDEM.tif'
-fabdem_drain_dir = r'G:/Shared drives/Jaltol/TBS_Jaltol Fellow/Ishita - Analysis + Data/GIS_files/Johad_Structures/Rasters/FABDEM/Drainage_Direction_FABDEM.tif'
+fabdem_flow_acc_threshold = 20
+fabdem_buffer = 0.00027027 # 30m
+fabdem = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM.tif'
+fabdem_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM.tif'
+fabdem_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM.tif'
 
 # don't change anything after this line
-def point_layer(latitude: float, longitude: float) -> QgsVectorLayer:
+def point_layer(latitude: float, longitude: float, lyr_name: str) -> QgsVectorLayer:
     """
     Create a point layer at the specified latitude and longitude.
 
@@ -39,7 +41,7 @@ def point_layer(latitude: float, longitude: float) -> QgsVectorLayer:
     """
     print(f'creating point layer for latitude {latitude} and longitude {longitude}')
     point = QgsPointXY(longitude, latitude)
-    layer = QgsVectorLayer('Point?crs=EPSG:4326', 'my_point', 'memory')
+    layer = QgsVectorLayer('Point?crs=EPSG:4326', lyr_name, 'memory')
     pr = layer.dataProvider()
     fields = [QgsField('Longitude', QVariant.Double), QgsField('Latitude', QVariant.Double)]
     pr.addAttributes(fields)
@@ -80,13 +82,15 @@ def catchment_delineation(lat: float, long: float, drain_dir_path: str) -> str:
     str: ID of the output catchment layer.
     """
     print('processing the r.water.outlet for catchment layer')
-    params = {'GRASS_RASTER_FORMAT_META' : '',
-            'GRASS_RASTER_FORMAT_OPT' : '',
-            'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
-            'GRASS_REGION_PARAMETER' : None,
-            'coordinates' : f'{long},{lat} [EPSG:4326]',
-            'input' : drain_dir_path,
-            'output' : 'TEMPORARY_OUTPUT' }
+    params = {
+        'GRASS_RASTER_FORMAT_META' : '',
+        'GRASS_RASTER_FORMAT_OPT' : '',
+        'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
+        'GRASS_REGION_PARAMETER' : None,
+        'coordinates' : f'{long},{lat} [EPSG:4326]',
+        'input' : drain_dir_path,
+        'output' : 'TEMPORARY_OUTPUT'
+    }
     result = processing.run("grass7:r.water.outlet", params)
     output_layer_id = result['output']
     processing2lyr(output_layer_id, 'catchment_delineated')
@@ -104,12 +108,14 @@ def catchment_polygonize(catchment_raster_path: str) -> str:
     str: ID of the output vector layer.
     """
     print('processing catchment raster to vector')
-    params = {'INPUT':catchment_raster_path,
-            'BAND':1,
-            'FIELD':'val',
-            'EIGHT_CONNECTEDNESS':False,
-            'EXTRA':'',
-            'OUTPUT':'TEMPORARY_OUTPUT'}
+    params = {
+        'INPUT':catchment_raster_path,
+        'BAND':1,
+        'FIELD':'val',
+        'EIGHT_CONNECTEDNESS':False,
+        'EXTRA':'',
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
     result = processing.run("gdal:polygonize", params)
     output_layer_id = result['OUTPUT']
     processing2lyr(output_layer_id, 'catchment_polygonized')
@@ -128,28 +134,27 @@ def mask_dem(dem_path: str, polygon_path: str) -> str:
     str: ID of the output raster layer.
     """
     print('processing elevation raster masking by catchment vector')
-    params = {'INPUT':dem_path,
-              'MASK':polygon_path,
-              'SOURCE_CRS':None,
-              'TARGET_CRS':None,
-              'TARGET_EXTENT':None,
-              'NODATA':None,
-              'ALPHA_BAND':False,
-              'CROP_TO_CUTLINE':False,
-              'KEEP_RESOLUTION':False,
-              'SET_RESOLUTION':False,
-              'X_RESOLUTION':None,
-              'Y_RESOLUTION':None,
-              'MULTITHREADING':False,
-              'OPTIONS':'',
-              'DATA_TYPE':0,
-              'EXTRA':'',
-              'OUTPUT':'TEMPORARY_OUTPUT'}
+    params = {
+        'INPUT':dem_path,
+        'MASK':polygon_path,
+        'SOURCE_CRS':None,
+        'TARGET_CRS':None,
+        'TARGET_EXTENT':None,
+        'NODATA':None,
+        'ALPHA_BAND':False,
+        'CROP_TO_CUTLINE':False,
+        'KEEP_RESOLUTION':False,
+        'SET_RESOLUTION':False,
+        'X_RESOLUTION':None,
+        'Y_RESOLUTION':None,
+        'MULTITHREADING':False,
+        'OPTIONS':'',
+        'DATA_TYPE':0,
+        'EXTRA':'',
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
     result = processing.run("gdal:cliprasterbymasklayer", params)
-    output_layer_id = result['OUTPUT']
-    processing2lyr(output_layer_id, 'elevation_masked')
-    print('masking elevation to catchment completed.')
-    return output_layer_id
+    return result['OUTPUT']
 
 def low_elev_point(pt_lyr: QgsVectorLayer, masked_elev_path: str) -> float:
     """
@@ -163,10 +168,12 @@ def low_elev_point(pt_lyr: QgsVectorLayer, masked_elev_path: str) -> float:
     float: Elevation of the lowest point.
     """
     print('processing lowerst elevation pixel')
-    params = {'INPUT':pt_lyr.source(),
-     'RASTERCOPY':masked_elev_path,
-     'COLUMN_PREFIX':'SAMPLE_',
-     'OUTPUT':'TEMPORARY_OUTPUT'}
+    params = {
+        'INPUT':pt_lyr.source(),
+        'RASTERCOPY':masked_elev_path,
+        'COLUMN_PREFIX':'SAMPLE_',
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
     result = processing.run("native:rastersampling", params)
     output_layer = result['OUTPUT']
     elevation_value = [feature['SAMPLE_1'] for feature in output_layer.getFeatures()][0]
@@ -184,13 +191,14 @@ def dem_polygonize(masked_elev_path: str) -> QgsVectorLayer:
     QgsVectorLayer: Polygonized vector layer.
     """
     print('processing elevation masked raster to polygons')
-    params = {'INPUT_RASTER':masked_elev_path,
-              'RASTER_BAND':1,
-              'FIELD_NAME':'elevation',
-              'OUTPUT':'TEMPORARY_OUTPUT'}
+    params = {
+        'INPUT_RASTER':masked_elev_path,
+        'RASTER_BAND':1,
+        'FIELD_NAME':'elevation',
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
     result = processing.run("native:pixelstopolygons", params)
     output_layer = result['OUTPUT']
-    print('polygonizing masked elevation completed.')
     return output_layer
 
 def calc_depth(lowest_elev: float, eff_height: float, elev_lyr: QgsVectorLayer) -> QgsVectorLayer:
@@ -245,7 +253,7 @@ def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float) -> QgsVectorLayer:
     print('pond pixels layer created')
     return pond_layer
 
-def calc_volume(pond_lyr: QgsVectorLayer, px_size: int) -> None:
+def calc_volume(pond_lyr: QgsVectorLayer, px_size: float) -> None:
     """
     Calculate the volume of water columns.
 
@@ -259,6 +267,63 @@ def calc_volume(pond_lyr: QgsVectorLayer, px_size: int) -> None:
     print(f'volume is {round(volume,2)} m3')
     print(f'capacity of storage is {round(volume/10000,2)} crore litres')
 
+def create_buffer(point_lyr_path, buffer_distance):
+    params = {
+        'INPUT':point_lyr_path,
+        'DISTANCE':buffer_distance,
+        'SEGMENTS':5,
+        'END_CAP_STYLE':0,
+        'JOIN_STYLE':0,
+        'MITER_LIMIT':2,
+        'DISSOLVE':False,
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
+    result = processing.run("native:buffer", params)
+    output_layer_id = result['OUTPUT']
+    print('buffer calculation completed.')
+    return output_layer_id
+
+def intersection_poly(input_layer, reference_layer):
+    index = QgsSpatialIndex(reference_layer.getFeatures())
+    input_layer.removeSelection()
+    for input_feature in input_layer.getFeatures():
+        input_geometry = input_feature.geometry()
+        intersecting_ids = index.intersects(input_geometry.boundingBox())
+        for reference_id in intersecting_ids:
+            reference_feature = reference_layer.getFeature(reference_id)
+            reference_geometry = reference_feature.geometry()
+            if input_geometry.intersects(reference_geometry):
+                input_layer.select(input_feature.id())
+    selected_layer = QgsVectorLayer("Polygon?crs=EPSG:4326", "selected_pixels", "memory")
+    provider = selected_layer.dataProvider()
+    selected_layer.startEditing()
+    fields = input_layer.fields()
+    for field in fields:
+        provider.addAttributes([field])
+    selected_layer.updateFields()
+    for feature in input_layer.selectedFeatures():
+        selected_layer.addFeature(feature)
+    # QgsProject.instance().addMapLayer(selected_layer)
+    selected_layer.commitChanges(stopEditing=True)
+    return selected_layer
+
+
+def correct_point(point_lyr, flow_acc_path, buffer_distance, threshold):
+    structure_buffer = create_buffer(point_lyr.source(), buffer_distance)
+    buffer_200 = create_buffer(point_lyr.source(), 0.0018018)
+    mask_200_path = mask_dem(flow_acc_path, buffer_200)
+    elev_poly = dem_polygonize(mask_200_path)
+    selected_pixels = intersection_poly(elev_poly, structure_buffer)
+    max_flow = max([f['elevation'] for f in selected_pixels.getFeatures()])
+    if max_flow < threshold:
+        raise ValueError('Flow Accumulation Threshold condition not satisfied.')
+    for f in selected_pixels.getFeatures():
+        if f['elevation'] == max_flow:
+            geometry = f.geometry()
+            centroid = geometry.centroid().asPoint()
+            return centroid.y(), centroid.x()
+    return 0.0, 0.0
+
 def main(data: str) -> None:
     """
     Main function to process data.
@@ -268,16 +333,24 @@ def main(data: str) -> None:
     """
     if data == 'fabdem':
         dem = fabdem
+        flow_acc = fabdem_flow_acc
         drain_dir = fabdem_drain_dir
         px_size = fabdem_px
+        buffer = fabdem_buffer
+        threshold = fabdem_flow_acc_threshold
     else:
         raise ValueError('mention the dataset used!')
-    pt_lyr = point_layer(lat, long)
+    given_pt = point_layer(latitude, longitude, 'given_point')
+    lat, long = correct_point(given_pt, flow_acc, buffer, threshold)
+    pt_lyr = point_layer(lat, long, 'calculated_point')
     catchment_raster_path = catchment_delineation(lat, long, drain_dir)
     catchment_poly_path = catchment_polygonize(catchment_raster_path)
     masked_elev_path = mask_dem(dem, catchment_poly_path)
+    processing2lyr(masked_elev_path, 'elevation_masked')
+    print('masking elevation to catchment completed.')
     lowest_elev = low_elev_point(pt_lyr, masked_elev_path)
     elev_lyr = dem_polygonize(masked_elev_path)
+    print('polygonizing masked elevation completed.')
     elev_lyr = calc_depth(lowest_elev, eff_height, elev_lyr)
     pond_lyr = pond_pixels(elev_lyr, eff_height)
     calc_volume(pond_lyr, px_size)
