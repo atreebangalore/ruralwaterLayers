@@ -276,7 +276,17 @@ def calc_volume(pond_lyr: QgsVectorLayer, px_size: float) -> None:
     print(f'volume is {round(volume,2)} m3')
     print(f'capacity of storage is {round(volume/10000,2)} crore litres')
 
-def create_buffer(point_lyr_path, buffer_distance):
+def create_buffer(point_lyr_path: str, buffer_distance: float) -> QgsVectorLayer:
+    """
+    Create a buffer feature for a point location provided.
+
+    Parameters:
+    - point_lyr_path (str): Input point layer for buffer.
+    - buffer_distance (float): Buffer distance.
+
+    Returns:
+    QgsVectorLayer: buffer layer.
+    """
     params = {
         'INPUT':point_lyr_path,
         'DISTANCE':buffer_distance,
@@ -291,17 +301,18 @@ def create_buffer(point_lyr_path, buffer_distance):
     output_layer_id = result['OUTPUT']
     return output_layer_id
 
-def intersection_poly(input_layer, reference_layer):
-    # index = QgsSpatialIndex(reference_layer.getFeatures())
+def intersection_poly(input_layer: QgsVectorLayer, reference_layer: str) -> QgsVectorLayer:
+    """
+    Extract Features in input layer that intersects the features in reference layer.
+
+    Parameters:
+    - input_layer (QgsVectorLayer): Input layer for selection of features.
+    - reference_layer (str): Reference layer used for selection.
+
+    Returns:
+    QgsVectorLayer: latitude, longitude and warning message for threshold.
+    """
     input_layer.removeSelection()
-    # for input_feature in input_layer.getFeatures():
-    #     input_geometry = input_feature.geometry()
-    #     intersecting_ids = index.intersects(input_geometry.boundingBox())
-    #     for reference_id in intersecting_ids:
-    #         reference_feature = reference_layer.getFeature(reference_id)
-    #         reference_geometry = reference_feature.geometry()
-    #         if input_geometry.intersects(reference_geometry):
-    #             input_layer.select(input_feature.id())
     params = {
         'INPUT':input_layer,
         'PREDICATE':[0],
