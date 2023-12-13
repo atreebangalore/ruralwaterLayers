@@ -12,20 +12,29 @@ Returns:
 """
 from PyQt5.QtCore import QVariant
 from qgis import processing
-from qgis.core import QgsProject, QgsVectorLayer, QgsSpatialIndex, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
+from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsCoordinateReferenceSystem, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
+from typing import Tuple
 
 # input (change for each structure)
+dataset = 'alos' # 'alos' or 'fabdem'
 latitude = 27.82714
 longitude = 76.90120
 eff_height = 3.47
 
-# config for the location of required files
+# config for data and location of required files
 fabdem_px = 30 # pixel size
 fabdem_flow_acc_threshold = 20
 fabdem_buffer = 0.00027027 # 30m
 fabdem = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM.tif'
 fabdem_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM.tif'
 fabdem_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM.tif'
+
+alos_px = 12.5
+alos_flow_acc_threshold = 500
+alos_buffer = 0.00027027 # 30m
+alos = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Elevation_ALOS_EPSG4326.tif'
+alos_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Flow_Accumulation_ALOS.tif'
+alos_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Drainage_Direction_ALOS.tif'
 
 # don't change anything after this line
 def point_layer(latitude: float, longitude: float, lyr_name: str) -> QgsVectorLayer:
@@ -133,12 +142,12 @@ def mask_dem(dem_path: str, polygon_path: str) -> str:
     Returns:
     str: ID of the output raster layer.
     """
-    print('processing elevation raster masking by catchment vector')
+    print('processing elevation raster masking by vector')
     params = {
         'INPUT':dem_path,
         'MASK':polygon_path,
         'SOURCE_CRS':None,
-        'TARGET_CRS':None,
+        'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'), #None,
         'TARGET_EXTENT':None,
         'NODATA':None,
         'ALPHA_BAND':False,
@@ -280,20 +289,26 @@ def create_buffer(point_lyr_path, buffer_distance):
     }
     result = processing.run("native:buffer", params)
     output_layer_id = result['OUTPUT']
-    print('buffer calculation completed.')
     return output_layer_id
 
 def intersection_poly(input_layer, reference_layer):
-    index = QgsSpatialIndex(reference_layer.getFeatures())
+    # index = QgsSpatialIndex(reference_layer.getFeatures())
     input_layer.removeSelection()
-    for input_feature in input_layer.getFeatures():
-        input_geometry = input_feature.geometry()
-        intersecting_ids = index.intersects(input_geometry.boundingBox())
-        for reference_id in intersecting_ids:
-            reference_feature = reference_layer.getFeature(reference_id)
-            reference_geometry = reference_feature.geometry()
-            if input_geometry.intersects(reference_geometry):
-                input_layer.select(input_feature.id())
+    # for input_feature in input_layer.getFeatures():
+    #     input_geometry = input_feature.geometry()
+    #     intersecting_ids = index.intersects(input_geometry.boundingBox())
+    #     for reference_id in intersecting_ids:
+    #         reference_feature = reference_layer.getFeature(reference_id)
+    #         reference_geometry = reference_feature.geometry()
+    #         if input_geometry.intersects(reference_geometry):
+    #             input_layer.select(input_feature.id())
+    params = {
+        'INPUT':input_layer,
+        'PREDICATE':[0],
+        'INTERSECT':reference_layer,
+        'METHOD':0
+    }
+    processing.run("native:selectbylocation", params)
     selected_layer = QgsVectorLayer("Polygon?crs=EPSG:4326", "selected_pixels", "memory")
     provider = selected_layer.dataProvider()
     selected_layer.startEditing()
@@ -303,26 +318,52 @@ def intersection_poly(input_layer, reference_layer):
     selected_layer.updateFields()
     for feature in input_layer.selectedFeatures():
         selected_layer.addFeature(feature)
-    # QgsProject.instance().addMapLayer(selected_layer)
     selected_layer.commitChanges(stopEditing=True)
+    input_layer.removeSelection()
     return selected_layer
 
 
-def correct_point(point_lyr, flow_acc_path, buffer_distance, threshold):
+def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance: float, threshold: int) -> Tuple[float, float, str]:
+    """
+    Extract pond pixels for the structure.
+
+    Parameters:
+    - point_lyr (QgsVectorLayer): Point Layer for structure location.
+    - flow_acc_path (str): Path for the flow accumulation raster.
+    - buffer_distance (float): distance for surrounding pixels to consider.
+    - threshold (int): Threshold for the flow accumulation value.
+
+    Returns:
+    Tuple[float, float, str]: latitude, longitude and warning message for threshold.
+    """
     structure_buffer = create_buffer(point_lyr.source(), buffer_distance)
-    buffer_200 = create_buffer(point_lyr.source(), 0.0018018)
-    mask_200_path = mask_dem(flow_acc_path, buffer_200)
-    elev_poly = dem_polygonize(mask_200_path)
+    buffer_100 = create_buffer(point_lyr.source(), 0.0009009)
+    print('buffer calculation completed.')
+    mask_100_path = mask_dem(flow_acc_path, buffer_100)
+    elev_poly = dem_polygonize(mask_100_path)
     selected_pixels = intersection_poly(elev_poly, structure_buffer)
     max_flow = max([f['elevation'] for f in selected_pixels.getFeatures()])
+    warning = ''
     if max_flow < threshold:
-        raise ValueError('Flow Accumulation Threshold condition not satisfied.')
+        warning = f'Warning: Flow Accumulation Threshold condition not satisfied. {max_flow}<{threshold}'
     for f in selected_pixels.getFeatures():
         if f['elevation'] == max_flow:
             geometry = f.geometry()
             centroid = geometry.centroid().asPoint()
-            return centroid.y(), centroid.x()
-    return 0.0, 0.0
+            return centroid.y(), centroid.x(), warning
+    return 0.0, 0.0, warning
+
+def check_projection(raster_path: str) -> None:
+    """
+    Check the projection of raster and print if it does not match EPSG:4326
+
+    Parameters:
+    - raster_path (str): Path to the Raster data.
+    """
+    raster = QgsRasterLayer(raster_path, 'projection_check', 'gdal')
+    if raster.crs() != QgsCoordinateReferenceSystem('EPSG:4326'):
+        print(f'{raster.crs().authid()} is the Projection of {raster_path}')
+    del raster
 
 def main(data: str) -> None:
     """
@@ -338,10 +379,19 @@ def main(data: str) -> None:
         px_size = fabdem_px
         buffer = fabdem_buffer
         threshold = fabdem_flow_acc_threshold
+    elif data == 'alos':
+        dem = alos
+        flow_acc = alos_flow_acc
+        drain_dir = alos_drain_dir
+        px_size = alos_px
+        buffer = alos_buffer
+        threshold = alos_flow_acc_threshold
     else:
         raise ValueError('mention the dataset used!')
+    print(f'\n# {data} calculation:')
+    map(check_projection, (dem, flow_acc, drain_dir))
     given_pt = point_layer(latitude, longitude, 'given_point')
-    lat, long = correct_point(given_pt, flow_acc, buffer, threshold)
+    lat, long, warning = correct_point(given_pt, flow_acc, buffer, threshold)
     pt_lyr = point_layer(lat, long, 'calculated_point')
     catchment_raster_path = catchment_delineation(lat, long, drain_dir)
     catchment_poly_path = catchment_polygonize(catchment_raster_path)
@@ -354,7 +404,8 @@ def main(data: str) -> None:
     elev_lyr = calc_depth(lowest_elev, eff_height, elev_lyr)
     pond_lyr = pond_pixels(elev_lyr, eff_height)
     calc_volume(pond_lyr, px_size)
+    print(warning)
 
 print('started...')
-main('fabdem')
+main(dataset)
 print('completed!!!')
