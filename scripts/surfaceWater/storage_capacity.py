@@ -17,9 +17,9 @@ from typing import Tuple
 
 # input (change for each structure)
 dataset = 'alos' # 'alos' or 'fabdem'
-latitude = 27.82714
-longitude = 76.90120
-eff_height = 3.47
+latitude = 27.79976
+longitude = 76.90703
+eff_height = 2.82
 
 # config for data and location of required files
 fabdem_px = 30 # pixel size
@@ -245,7 +245,7 @@ def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float) -> QgsVectorLayer:
     QgsVectorLayer: Pond pixels vector layer.
     """
     print('extracting pond pixels for the structure')
-    expression = QgsExpression(f'"depth" > 0 AND "depth" < {eff_height+1}')
+    expression = QgsExpression(f'"depth" > 0 AND "depth" < {eff_height+50}')
     elev_lyr.setSubsetString(expression.expression())
     pond_layer = QgsVectorLayer("Polygon?crs=EPSG:4326", "pond_pixels", "memory")
     provider = pond_layer.dataProvider()
