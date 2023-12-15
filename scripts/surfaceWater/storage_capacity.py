@@ -12,14 +12,14 @@ Returns:
 """
 from PyQt5.QtCore import QVariant
 from qgis import processing
-from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsCoordinateReferenceSystem, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
-from typing import Tuple
+from qgis.core import QgsProject, QgsVectorLayer, QgsFeature, QgsRasterLayer, QgsDistanceArea, QgsCoordinateReferenceSystem, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
+from typing import Tuple, List, Dict
 
 # input (change for each structure)
 dataset = 'alos' # 'alos' or 'fabdem'
-latitude = 27.79976
-longitude = 76.90703
-eff_height = 2.82
+latitude = 27.84223
+longitude = 76.92458
+eff_height = 5
 
 # config for data and location of required files
 fabdem_px = 30 # pixel size
@@ -207,8 +207,7 @@ def dem_polygonize(masked_elev_path: str) -> QgsVectorLayer:
         'OUTPUT':'TEMPORARY_OUTPUT'
     }
     result = processing.run("native:pixelstopolygons", params)
-    output_layer = result['OUTPUT']
-    return output_layer
+    return result['OUTPUT']
 
 def calc_depth(lowest_elev: float, eff_height: float, elev_lyr: QgsVectorLayer) -> QgsVectorLayer:
     """
@@ -272,6 +271,7 @@ def calc_volume(pond_lyr: QgsVectorLayer, px_size: float) -> None:
     """
     print('calculating the volume of water columns')
     px_list = [f['depth'] for f in pond_lyr.getFeatures()]
+    print(f'depth values considered for volume calculation: {px_list}')
     volume = sum(px_list) * px_size * px_size
     print(f'volume is {round(volume,2)} m3')
     print(f'capacity of storage is {round(volume/10000,2)} crore litres')
@@ -298,8 +298,7 @@ def create_buffer(point_lyr_path: str, buffer_distance: float) -> QgsVectorLayer
         'OUTPUT':'TEMPORARY_OUTPUT'
     }
     result = processing.run("native:buffer", params)
-    output_layer_id = result['OUTPUT']
-    return output_layer_id
+    return result['OUTPUT']
 
 def intersection_poly(input_layer: QgsVectorLayer, reference_layer: str) -> QgsVectorLayer:
     """
@@ -333,8 +332,29 @@ def intersection_poly(input_layer: QgsVectorLayer, reference_layer: str) -> QgsV
     input_layer.removeSelection()
     return selected_layer
 
+def check_threshold(threshold: float, flow_px_list: List[float]) -> Tuple[Tuple[float, ...], str]:
+    max_flow = max(flow_px_list)
+    warning = ''
+    if max_flow < threshold:
+        warning += f'Warning: Flow Accumulation Threshold condition not satisfied. {max_flow}<{threshold}'
+        min_flow = min(flow_px_list)
+        threshold = max_flow - ( (max_flow - min_flow) / 2 )
+        warning += f'\nNew Threshold considered is {threshold}'
+    return tuple(filter(lambda x: x>=threshold, flow_px_list)), warning
 
-def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance: float, threshold: int) -> Tuple[float, float, str]:
+def distance_feature_dict(point_lyr: QgsVectorLayer, selected_pixels: QgsVectorLayer, filtered_px: Tuple[float, ...]) -> Dict[float, QgsFeature]:
+    distance_area = QgsDistanceArea()
+    distance_area.setEllipsoid('WGS84')
+    given_centroid = list(point_lyr.getFeatures())[0].geometry().centroid().asPoint()
+    dist_dict = {}
+    for f in selected_pixels.getFeatures():
+        if f['elevation'] in filtered_px:
+            centroid = f.geometry().centroid().asPoint()
+            distance = distance_area.measureLine(given_centroid, centroid)
+            dist_dict[distance] = f
+    return dist_dict
+
+def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance: float, threshold: float) -> Tuple[float, float, str]:
     """
     Extract pond pixels for the structure.
 
@@ -353,16 +373,12 @@ def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance
     mask_100_path = mask_dem(flow_acc_path, buffer_100)
     elev_poly = dem_polygonize(mask_100_path)
     selected_pixels = intersection_poly(elev_poly, structure_buffer)
-    max_flow = max([f['elevation'] for f in selected_pixels.getFeatures()])
-    warning = ''
-    if max_flow < threshold:
-        warning = f'Warning: Flow Accumulation Threshold condition not satisfied. {max_flow}<{threshold}'
-    for f in selected_pixels.getFeatures():
-        if f['elevation'] == max_flow:
-            geometry = f.geometry()
-            centroid = geometry.centroid().asPoint()
-            return centroid.y(), centroid.x(), warning
-    return 0.0, 0.0, warning
+    flow_px_list = [f['elevation'] for f in selected_pixels.getFeatures()]
+    filtered_px, warning = check_threshold(threshold, flow_px_list)
+    dist_dict = distance_feature_dict(point_lyr, selected_pixels, filtered_px)
+    selected_feature = dist_dict[min(dist_dict.keys())]
+    selected_centroid = selected_feature.geometry().centroid().asPoint()
+    return selected_centroid.y(), selected_centroid.x(), warning
 
 def check_projection(raster_path: str) -> None:
     """
