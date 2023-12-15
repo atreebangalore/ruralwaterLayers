@@ -333,6 +333,15 @@ def intersection_poly(input_layer: QgsVectorLayer, reference_layer: str) -> QgsV
     return selected_layer
 
 def check_threshold(threshold: float, flow_px_list: List[float]) -> Tuple[Tuple[float, ...], str]:
+    """check the flow accumulation values and filter out those above threshold
+
+    Args:
+    - threshold (float): threshold value for flow accumulation
+    - flow_px_list (List[float]): flow accumulation values surrounding input location
+
+    Returns:
+    Tuple[Tuple[float, ...], str]: filtered flow accumulation values
+    """
     max_flow = max(flow_px_list)
     warning = ''
     if max_flow < threshold:
@@ -343,6 +352,16 @@ def check_threshold(threshold: float, flow_px_list: List[float]) -> Tuple[Tuple[
     return tuple(filter(lambda x: x>=threshold, flow_px_list)), warning
 
 def distance_feature_dict(point_lyr: QgsVectorLayer, selected_pixels: QgsVectorLayer, filtered_px: Tuple[float, ...]) -> Dict[float, QgsFeature]:
+    """calculate the distances between each pixel centroid to the given point
+
+    Parameters:
+    - point_lyr (QgsVectorLayer): input given point
+    - selected_pixels (QgsVectorLayer): selected pixels from flow accumulation
+    - filtered_px (Tuple[float, ...]): flow accumulation values filtered based on threshold
+
+    Returns:
+    Dict[float, QgsFeature]: distance as key and feature as value
+    """
     distance_area = QgsDistanceArea()
     distance_area.setEllipsoid('WGS84')
     given_centroid = list(point_lyr.getFeatures())[0].geometry().centroid().asPoint()
