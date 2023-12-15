@@ -24,14 +24,14 @@ eff_height = 5
 # config for data and location of required files
 fabdem_px = 30 # pixel size
 fabdem_flow_acc_threshold = 20
-fabdem_buffer = 0.00027027 # 30m
+fabdem_buffer = 0.00081081081 # 90m
 fabdem = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM.tif'
 fabdem_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM.tif'
 fabdem_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM.tif'
 
 alos_px = 12.5
 alos_flow_acc_threshold = 500
-alos_buffer = 0.00027027 # 30m
+alos_buffer = 0.0009009009 # 100m
 alos = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Elevation_ALOS_EPSG4326.tif'
 alos_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Flow_Accumulation_ALOS.tif'
 alos_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Drainage_Direction_ALOS.tif'
@@ -368,10 +368,10 @@ def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance
     Tuple[float, float, str]: latitude, longitude and warning message for threshold.
     """
     structure_buffer = create_buffer(point_lyr.source(), buffer_distance)
-    buffer_100 = create_buffer(point_lyr.source(), 0.0009009)
+    buffer_200 = create_buffer(point_lyr.source(), 0.0018018018) # 200m buffer
     print('buffer calculation completed.')
-    mask_100_path = mask_dem(flow_acc_path, buffer_100)
-    elev_poly = dem_polygonize(mask_100_path)
+    mask_200_path = mask_dem(flow_acc_path, buffer_200)
+    elev_poly = dem_polygonize(mask_200_path)
     selected_pixels = intersection_poly(elev_poly, structure_buffer)
     flow_px_list = [f['elevation'] for f in selected_pixels.getFeatures()]
     filtered_px, warning = check_threshold(threshold, flow_px_list)
