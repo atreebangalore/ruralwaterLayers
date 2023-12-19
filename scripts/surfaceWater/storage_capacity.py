@@ -12,26 +12,26 @@ Returns:
 """
 from PyQt5.QtCore import QVariant
 from qgis import processing
-from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsCoordinateReferenceSystem, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
-from typing import Tuple
+from qgis.core import QgsProject, QgsVectorLayer, QgsFeature, QgsRasterLayer, QgsDistanceArea, QgsCoordinateReferenceSystem, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
+from typing import Tuple, List, Dict
 
 # input (change for each structure)
 dataset = 'alos' # 'alos' or 'fabdem'
-latitude = 27.82714
-longitude = 76.90120
-eff_height = 3.47
+latitude = 27.84223
+longitude = 76.92458
+eff_height = 5
 
 # config for data and location of required files
 fabdem_px = 30 # pixel size
 fabdem_flow_acc_threshold = 20
-fabdem_buffer = 0.00027027 # 30m
+fabdem_buffer = 0.00081081081 # 90m
 fabdem = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM.tif'
 fabdem_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM.tif'
 fabdem_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM.tif'
 
 alos_px = 12.5
 alos_flow_acc_threshold = 500
-alos_buffer = 0.00027027 # 30m
+alos_buffer = 0.0009009009 # 100m
 alos = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Elevation_ALOS_EPSG4326.tif'
 alos_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Flow_Accumulation_ALOS.tif'
 alos_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Drainage_Direction_ALOS.tif'
@@ -207,8 +207,7 @@ def dem_polygonize(masked_elev_path: str) -> QgsVectorLayer:
         'OUTPUT':'TEMPORARY_OUTPUT'
     }
     result = processing.run("native:pixelstopolygons", params)
-    output_layer = result['OUTPUT']
-    return output_layer
+    return result['OUTPUT']
 
 def calc_depth(lowest_elev: float, eff_height: float, elev_lyr: QgsVectorLayer) -> QgsVectorLayer:
     """
@@ -245,7 +244,7 @@ def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float) -> QgsVectorLayer:
     QgsVectorLayer: Pond pixels vector layer.
     """
     print('extracting pond pixels for the structure')
-    expression = QgsExpression(f'"depth" > 0 AND "depth" < {eff_height+1}')
+    expression = QgsExpression(f'"depth" > 0 AND "depth" < {eff_height+50}')
     elev_lyr.setSubsetString(expression.expression())
     pond_layer = QgsVectorLayer("Polygon?crs=EPSG:4326", "pond_pixels", "memory")
     provider = pond_layer.dataProvider()
@@ -272,6 +271,7 @@ def calc_volume(pond_lyr: QgsVectorLayer, px_size: float) -> None:
     """
     print('calculating the volume of water columns')
     px_list = [f['depth'] for f in pond_lyr.getFeatures()]
+    print(f'depth values considered for volume calculation: {px_list}')
     volume = sum(px_list) * px_size * px_size
     print(f'volume is {round(volume,2)} m3')
     print(f'capacity of storage is {round(volume/10000,2)} crore litres')
@@ -298,8 +298,7 @@ def create_buffer(point_lyr_path: str, buffer_distance: float) -> QgsVectorLayer
         'OUTPUT':'TEMPORARY_OUTPUT'
     }
     result = processing.run("native:buffer", params)
-    output_layer_id = result['OUTPUT']
-    return output_layer_id
+    return result['OUTPUT']
 
 def intersection_poly(input_layer: QgsVectorLayer, reference_layer: str) -> QgsVectorLayer:
     """
@@ -333,8 +332,48 @@ def intersection_poly(input_layer: QgsVectorLayer, reference_layer: str) -> QgsV
     input_layer.removeSelection()
     return selected_layer
 
+def check_threshold(threshold: float, flow_px_list: List[float]) -> Tuple[Tuple[float, ...], str]:
+    """check the flow accumulation values and filter out those above threshold
 
-def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance: float, threshold: int) -> Tuple[float, float, str]:
+    Args:
+    - threshold (float): threshold value for flow accumulation
+    - flow_px_list (List[float]): flow accumulation values surrounding input location
+
+    Returns:
+    Tuple[Tuple[float, ...], str]: filtered flow accumulation values
+    """
+    max_flow = max(flow_px_list)
+    warning = ''
+    if max_flow < threshold:
+        warning += f'Warning: Flow Accumulation Threshold condition not satisfied. {max_flow}<{threshold}'
+        min_flow = min(flow_px_list)
+        threshold = max_flow - ( (max_flow - min_flow) / 2 )
+        warning += f'\nNew Threshold considered is {threshold}'
+    return tuple(filter(lambda x: x>=threshold, flow_px_list)), warning
+
+def distance_feature_dict(point_lyr: QgsVectorLayer, selected_pixels: QgsVectorLayer, filtered_px: Tuple[float, ...]) -> Dict[float, QgsFeature]:
+    """calculate the distances between each pixel centroid to the given point
+
+    Parameters:
+    - point_lyr (QgsVectorLayer): input given point
+    - selected_pixels (QgsVectorLayer): selected pixels from flow accumulation
+    - filtered_px (Tuple[float, ...]): flow accumulation values filtered based on threshold
+
+    Returns:
+    Dict[float, QgsFeature]: distance as key and feature as value
+    """
+    distance_area = QgsDistanceArea()
+    distance_area.setEllipsoid('WGS84')
+    given_centroid = list(point_lyr.getFeatures())[0].geometry().centroid().asPoint()
+    dist_dict = {}
+    for f in selected_pixels.getFeatures():
+        if f['elevation'] in filtered_px:
+            centroid = f.geometry().centroid().asPoint()
+            distance = distance_area.measureLine(given_centroid, centroid)
+            dist_dict[distance] = f
+    return dist_dict
+
+def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance: float, threshold: float) -> Tuple[float, float, str]:
     """
     Extract pond pixels for the structure.
 
@@ -348,21 +387,17 @@ def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance
     Tuple[float, float, str]: latitude, longitude and warning message for threshold.
     """
     structure_buffer = create_buffer(point_lyr.source(), buffer_distance)
-    buffer_100 = create_buffer(point_lyr.source(), 0.0009009)
+    buffer_200 = create_buffer(point_lyr.source(), 0.0018018018) # 200m buffer
     print('buffer calculation completed.')
-    mask_100_path = mask_dem(flow_acc_path, buffer_100)
-    elev_poly = dem_polygonize(mask_100_path)
+    mask_200_path = mask_dem(flow_acc_path, buffer_200)
+    elev_poly = dem_polygonize(mask_200_path)
     selected_pixels = intersection_poly(elev_poly, structure_buffer)
-    max_flow = max([f['elevation'] for f in selected_pixels.getFeatures()])
-    warning = ''
-    if max_flow < threshold:
-        warning = f'Warning: Flow Accumulation Threshold condition not satisfied. {max_flow}<{threshold}'
-    for f in selected_pixels.getFeatures():
-        if f['elevation'] == max_flow:
-            geometry = f.geometry()
-            centroid = geometry.centroid().asPoint()
-            return centroid.y(), centroid.x(), warning
-    return 0.0, 0.0, warning
+    flow_px_list = [f['elevation'] for f in selected_pixels.getFeatures()]
+    filtered_px, warning = check_threshold(threshold, flow_px_list)
+    dist_dict = distance_feature_dict(point_lyr, selected_pixels, filtered_px)
+    selected_feature = dist_dict[min(dist_dict.keys())]
+    selected_centroid = selected_feature.geometry().centroid().asPoint()
+    return selected_centroid.y(), selected_centroid.x(), warning
 
 def check_projection(raster_path: str) -> None:
     """
