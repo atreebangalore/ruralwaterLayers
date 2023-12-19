@@ -2,8 +2,7 @@ from calendar import monthrange
 from datetime import datetime
 from datetime import timedelta as td
 import json
-from operator import index
-from typing import Tuple, Optional, Any
+from typing import Tuple, Optional, Any, List, Dict
 
 import ee
 from ee_plugin import Map  # requires ee plugin installed in QGIS
@@ -216,14 +215,23 @@ def get_eff_rainfall_m3(area_m2, rain_mm_dict):
     rain_dict_m3 = {}
     for k,v in rain_dict_mm.items():
         if v>75:
-            rain_dict_mm[k] = (((0.8*v) - 25)/1000)
+            rain_dict_mm[k] = ((0.8*v) - 25)
             rain_dict_m3[k] = (((0.8*v) - 25)/1000) * area_m2
         else:
-            val_mm = (((0.6*v) - 10)/1000)
+            val_mm = ((0.6*v) - 10)
             val = (((0.6*v) - 10)/1000) * area_m2
-            rain_dict_mm[k] = val_mm if val_mm>0 else 0
-            rain_dict_m3[k] = val if val>0 else 0
+            rain_dict_mm[k] = max(val_mm, 0)
+            rain_dict_m3[k] = max(val, 0)
     return rain_dict_mm, rain_dict_m3
+
+def check_crop_dataset(season_df, kc_df):
+    kc_crops = kc_df['Crop'].values
+    missing_crops = [
+        row['Crop']
+        for _, row in season_df.iterrows()
+        if row['Crop'] not in kc_crops
+    ]
+    if missing_crops: print(f'Missing crops between datasets: {missing_crops}')
 
 def monthly_kc(season_df, season_start, kc_df):
     out ={}
@@ -233,7 +241,7 @@ def monthly_kc(season_df, season_start, kc_df):
         for stage in ('ini', 'dev', 'mid', 'late'):
             try:
                 duration = kc_df.loc[kc_df['Crop']==row['Crop']][f'Duration ({stage})'].values[0]
-                end_date = start_date+td(days=duration)
+                end_date = start_date+td(days=int(duration))
             except (KeyError, ValueError, IndexError):
                 continue
             date_range = pd.date_range(start_date, end_date)
@@ -267,12 +275,14 @@ def monthly_ETc(crop_ETc_dict):
     return out
 
 def monthly_IWR(monthly_ETc, eff_rain_m3):
-    out = {}
-    for month in monthly_ETc:
-        out[month] = monthly_ETc[month] - eff_rain_m3[month]
-    return out
+    return {
+        month: monthly_ETc[month] - eff_rain_m3[month] for month in monthly_ETc
+    }
 
 def crop_water(year, ref_ET, eff_rain_m3, kc_df, kharif_df, rabi_df, zaid_df, crop_area):
+    check_crop_dataset(kharif_df, kc_df)
+    check_crop_dataset(rabi_df, kc_df)
+    check_crop_dataset(zaid_df, kc_df)
     kharif_monthly_kc_dict = monthly_kc(kharif_df, season_dict(year)['kharif_start'], kc_df)
     rabi_monthly_kc_dict = monthly_kc(rabi_df, season_dict(year)['rabi_start'], kc_df)
     zaid_monthly_kc_dict = monthly_kc(zaid_df, season_dict(year)['zaid_start'], kc_df)
@@ -304,9 +314,9 @@ def crop_water(year, ref_ET, eff_rain_m3, kc_df, kharif_df, rabi_df, zaid_df, cr
     # print(f'kharif monthly IWR (m3): {kharif_IWR_dict}')
     # print(f'rabi monthly IWR (m3): {rabi_IWR_dict}')
     # print(f'zaid monthly IWR (m3): {zaid_IWR_dict}')
-    kharif_IWR_dict_corrected = {k:v if v>0 else 0 for k,v in kharif_IWR_dict.items()}
-    rabi_IWR_dict_corrected = {k:v if v>0 else 0 for k,v in rabi_IWR_dict.items()}
-    zaid_IWR_dict_corrected = {k:v if v>0 else 0 for k,v in zaid_IWR_dict.items()}
+    kharif_IWR_dict_corrected = {k: max(v, 0) for k,v in kharif_IWR_dict.items()}
+    rabi_IWR_dict_corrected = {k: max(v, 0) for k,v in rabi_IWR_dict.items()}
+    zaid_IWR_dict_corrected = {k: max(v, 0) for k,v in zaid_IWR_dict.items()}
     dataframe_generation(
         kharif_ETc_mm=kharif_month_ETc_dict_mm,
         kharif_ETc_m3=kharif_month_ETc_dict,
@@ -372,9 +382,11 @@ def main(year):
     kharif_df = filter_df(crop_df, district, 'Kharif')
     rabi_df = filter_df(crop_df, district, 'Rabi')
     zaid_df = filter_df(crop_df, district, 'Zaid')
-    # kharif_df = kharif_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
-    # rabi_df = rabi_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
-    # zaid_df = zaid_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
+    # the dataset is sorted to consider only the CROPS_CONSIDERED number of crops
+    print(f'considering only the {CROPS_CONSIDERED} number of crops for a season.')
+    kharif_df = kharif_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
+    rabi_df = rabi_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
+    zaid_df = zaid_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
     # method 1
     iwr_m3 = crop_water(year, ref_ET, eff_rain_m3, kc_df, kharif_df, rabi_df, zaid_df, crop_m2_year)
     blue_water_m3 = iwr_m3 + domestic_m3
@@ -382,9 +394,9 @@ def main(year):
     recharge_mm, recharge_m3 = recharge(geo_m2, rain_mm_dict)
     print(f'recharge (m3): {round(recharge_m3,2)}')
     availability_1 = blue_water_m3/recharge_m3
-    print(f'Avaiability Indicator (method 1): {round(availability_1,2)}')
-    #method 2
+    print(f'Availability Indicator (method 1): {round(availability_1,2)}')
+    # method 2
     availability_2 = availability_indicator_2(roi, year, rain_mm_dict)
-    print(f'Avaiability Indicator (method 2): {round(availability_2,2)}')
+    print(f'Availability Indicator (method 2): {round(availability_2,2)}')
 
 main(YEAR)
