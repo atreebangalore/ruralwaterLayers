@@ -210,16 +210,27 @@ def get_rainfall(roi, year):
         ).getInfo()['b1']
     return P_dict
 
+def check_area(area_m2, k):
+    if isinstance(area_m2, float):
+        return area_m2
+    k = int(k)
+    if k < RABI_START_MONTH and k>= KHARIF_START_MONTH:
+        return area_m2['kharif']
+    elif k < KHARIF_START_MONTH and k>= ZAID_START_MONTH:
+        return area_m2['zaid']
+    else:
+        return area_m2['rabi']
+
 def get_eff_rainfall_m3(area_m2, rain_mm_dict):
     rain_dict_mm = rain_mm_dict.copy()
     rain_dict_m3 = {}
     for k,v in rain_dict_mm.items():
         if v>75:
             rain_dict_mm[k] = ((0.8*v) - 25)
-            rain_dict_m3[k] = (((0.8*v) - 25)/1000) * area_m2
+            rain_dict_m3[k] = (((0.8*v) - 25)/1000) * check_area(area_m2,k)
         else:
             val_mm = ((0.6*v) - 10)
-            val = (((0.6*v) - 10)/1000) * area_m2
+            val = (((0.6*v) - 10)/1000) * check_area(area_m2,k)
             rain_dict_mm[k] = max(val_mm, 0)
             rain_dict_m3[k] = max(val, 0)
     return rain_dict_mm, rain_dict_m3
@@ -290,9 +301,9 @@ def crop_water(year, ref_ET, eff_rain_m3, kc_df, kharif_df, rabi_df, zaid_df, cr
     # print(f'rabi monthly kc: {rabi_monthly_kc_dict}')
     # print(f'zaid monthly kc: {zaid_monthly_kc_dict}')
     no_days_dict = no_of_days(year)
-    kharif_ETc_dict = crop_ETc(kharif_monthly_kc_dict, kharif_df, ref_ET, no_days_dict, crop_area)
-    rabi_ETc_dict = crop_ETc(rabi_monthly_kc_dict, rabi_df, ref_ET, no_days_dict, crop_area)
-    zaid_ETc_dict = crop_ETc(zaid_monthly_kc_dict, zaid_df, ref_ET, no_days_dict, crop_area)
+    kharif_ETc_dict = crop_ETc(kharif_monthly_kc_dict, kharif_df, ref_ET, no_days_dict, check_area(crop_area,KHARIF_START_MONTH))
+    rabi_ETc_dict = crop_ETc(rabi_monthly_kc_dict, rabi_df, ref_ET, no_days_dict, check_area(crop_area,RABI_START_MONTH))
+    zaid_ETc_dict = crop_ETc(zaid_monthly_kc_dict, zaid_df, ref_ET, no_days_dict, check_area(crop_area,ZAID_START_MONTH))
     # print(f'kharif monthly crop ETc (m3): {kharif_ETc_dict}')
     # print(f'rabi monthly crop ETc (m3): {rabi_ETc_dict}')
     # print(f'zaid monthly crop ETc (m3): {zaid_ETc_dict}')
@@ -302,9 +313,9 @@ def crop_water(year, ref_ET, eff_rain_m3, kc_df, kharif_df, rabi_df, zaid_df, cr
     # print(f'kharif monthly ETc (m3): {kharif_month_ETc_dict}')
     # print(f'rabi monthly ETc (m3): {rabi_month_ETc_dict}')
     # print(f'zaid monthly ETc (m3): {zaid_month_ETc_dict}')
-    kharif_month_ETc_dict_mm = {k:(v/crop_area)*1000 for k,v in kharif_month_ETc_dict.items()}
-    rabi_month_ETc_dict_mm = {k:(v/crop_area)*1000 for k,v in rabi_month_ETc_dict.items()}
-    zaid_month_ETc_dict_mm = {k:(v/crop_area)*1000 for k,v in zaid_month_ETc_dict.items()}
+    kharif_month_ETc_dict_mm = {k:(v/check_area(crop_area,k))*1000 for k,v in kharif_month_ETc_dict.items()}
+    rabi_month_ETc_dict_mm = {k:(v/check_area(crop_area,k))*1000 for k,v in rabi_month_ETc_dict.items()}
+    zaid_month_ETc_dict_mm = {k:(v/check_area(crop_area,k))*1000 for k,v in zaid_month_ETc_dict.items()}
     # print(f'kharif monthly ETc (mm): {kharif_month_ETc_dict_mm}')
     # print(f'rabi monthly ETc (mm): {rabi_month_ETc_dict_mm}')
     # print(f'zaid monthly ETc (mm): {zaid_month_ETc_dict_mm}')
@@ -357,25 +368,33 @@ def main(year):
     district = 'USM>N>B>D'
     geo_m2, geo_km2 = fc_area(roi)
     print(f'input year: {year}')
-    
+
     # Access Indicator
     irr_dict = irrigation_area(year, roi)
     crop_dict = crop_area(year, roi)
     access_dict = access_indicator(year, irr_dict, crop_dict)
     dataframe_generation(irrigation_m2=irr_dict,cropland_m2=crop_dict,access_indicator=access_dict)
     print(f'Access Indicator (5yr mean): {round(sum(access_dict.values())/len(access_dict.values()),2)}')
-    
+
     # Resilience Indicator
     print(f'crop reselience indicator: {round(resilience_indicator(crop_dict),2)}')
     print(f'irrigation reselience indicator: {round(resilience_indicator(irr_dict),2)}')
-    
+
     #Availability Indicator
     domestic_m3, domestic_mcm = hh_requirement(roi)
-    crop_m2_year = crop_dict[year]
-    print(f'area of cropland in {year} is {round(crop_m2_year,2)} m2')
+    # crop_m2 = crop_dict[year]
+    crop_m2 = {
+        'kharif': get_crop_m2(roi, season_dict(year)['kharif_start'], season_dict(year)['rabi_start']),
+        'rabi': get_crop_m2(roi, season_dict(year)['rabi_start'], season_dict(year)['zaid_start']),
+        'zaid': get_crop_m2(roi, season_dict(year)['zaid_start'], season_dict(year)['zaid_end'])
+    }
+    if isinstance(crop_m2, float):
+        print(f'area of cropland in {year} is {round(crop_m2,2)} m2')
+    else:
+        print(f'crop area {year}: {[(k,round(v,2)) for k,v in crop_m2.items()]}')
     rain_mm_dict = get_rainfall(roi, year)
     ref_ET = get_refET(roi, year)
-    eff_rain_mm, eff_rain_m3 = get_eff_rainfall_m3(crop_m2_year, rain_mm_dict)
+    eff_rain_mm, eff_rain_m3 = get_eff_rainfall_m3(crop_m2, rain_mm_dict)
     dataframe_generation(rainfall_mm=rain_mm_dict,eff_rainfall_mm=eff_rain_mm,eff_rainfall_m3=eff_rain_m3,ref_ET0_mm_per_day=ref_ET)
     crop_df = read_url(DIST_URL)
     kc_df = read_url(COEFF_URL)
@@ -388,7 +407,7 @@ def main(year):
     rabi_df = rabi_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
     zaid_df = zaid_df.sort_values(by=['Percentage_Area'], ascending=False).head(CROPS_CONSIDERED).reset_index(drop=True)
     # method 1
-    iwr_m3 = crop_water(year, ref_ET, eff_rain_m3, kc_df, kharif_df, rabi_df, zaid_df, crop_m2_year)
+    iwr_m3 = crop_water(year, ref_ET, eff_rain_m3, kc_df, kharif_df, rabi_df, zaid_df, crop_m2)
     blue_water_m3 = iwr_m3 + domestic_m3
     print(f'iwr(m3) {round(iwr_m3,2)} + domestic(m3) {round(domestic_m3,2)} = blue water(m3) {round(blue_water_m3,2)}')
     recharge_mm, recharge_m3 = recharge(geo_m2, rain_mm_dict)
