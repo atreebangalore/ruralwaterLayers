@@ -6,23 +6,15 @@ from pathlib import Path
 from itertools import product
 
 district_name = 'raichur'
-village_name = 'sanbal'
+village_list = ['sanbal', 'rampur']
 start_year = 2000
 end_year = 2020
 
-district_fc = ee.FeatureCollection(
-    'users/jaltolwelllabs/hackathonDists/hackathon_dists'
-    ).filter(ee.Filter.eq('district_n', district_name))
-village_fc = district_fc.filter(ee.Filter.eq('village_na', village_name))
-village_geometry = village_fc.geometry()
 precipitation_collection = ee.ImageCollection("users/jaltolwelllabs/IMD/minTemp")
-
-dataFol = Path.home().joinpath("Data", "hackathon", village_name)
-dataFol.mkdir(parents=True, exist_ok=True)
 
 print('started!!!')
 
-def save_CSV(df, parameter, timestep, village_name):
+def save_CSV(df, parameter, timestep, village_name, dataFol):
     filename = f'{village_name}-{parameter}-{timestep}.csv'
     path = dataFol.joinpath(filename)
     df.to_csv(path)
@@ -74,7 +66,7 @@ def getStats(image: ee.Image, geometry: ee.Geometry, reducer) -> ee.Image:
     )
     return image.setMulti(stats)
 
-def get_rainfall(agg_col, pattern, unit, reducer):
+def get_rainfall(agg_col, pattern, unit, reducer, village_geometry):
     year_with_stats = agg_col.map(lambda image: getStats(image, village_geometry, reducer))
 
     yr_rain_values = year_with_stats.aggregate_array('b1').getInfo()
@@ -91,56 +83,69 @@ year_list = list(range(start_year, end_year+1))
 month_numbers = list(range(1,13))
 month_list = list(product(year_list,month_numbers))
 
-# hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'sum')))
-# yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC', 'sum')
-# filepath = save_CSV(yr_df, 'TotalMinTemp', 'hydYear', village_name)
-# print(f'completed: {filepath}')
+def main(village_name):
+    district_fc = ee.FeatureCollection(
+        'users/jaltolwelllabs/hackathonDists/hackathon_dists'
+        ).filter(ee.Filter.eq('district_n', district_name))
+    village_fc = district_fc.filter(ee.Filter.eq('village_na', village_name))
+    village_geometry = village_fc.geometry()
 
-hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'mean')))
-yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'mean')
-filepath = save_CSV(yr_df, 'MeanMinTemp', 'hydYear', village_name)
-print(f'completed: {filepath}')
+    dataFol = Path.home().joinpath("Data", "hackathon", district_name, village_name)
+    dataFol.mkdir(parents=True, exist_ok=True)
+    
+    # hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'sum')))
+    # yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC', 'sum', village_geometry)
+    # filepath = save_CSV(yr_df, 'TotalMinTemp', 'hydYear', village_name, dataFol)
+    # print(f'completed: {filepath}')
 
-hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'median')))
-yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'median')
-filepath = save_CSV(yr_df, 'MedianMinTemp', 'hydYear', village_name)
-print(f'completed: {filepath}')
+    hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'mean')))
+    yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'mean', village_geometry)
+    filepath = save_CSV(yr_df, 'MeanMinTemp', 'hydYear', village_name, dataFol)
+    print(f'completed: {filepath}')
 
-hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'max')))
-yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'max')
-filepath = save_CSV(yr_df, 'MaxMinTemp', 'hydYear', village_name)
-print(f'completed: {filepath}')
+    hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'median')))
+    yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'median', village_geometry)
+    filepath = save_CSV(yr_df, 'MedianMinTemp', 'hydYear', village_name, dataFol)
+    print(f'completed: {filepath}')
 
-# hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'min')))
-# yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'min')
-# filepath = save_CSV(yr_df, 'MinMinTemp', 'hydYear', village_name)
-# print(f'completed: {filepath}')
+    hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'max')))
+    yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'max', village_geometry)
+    filepath = save_CSV(yr_df, 'MaxMinTemp', 'hydYear', village_name, dataFol)
+    print(f'completed: {filepath}')
 
-# hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'sum')))
-# mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC', 'sum')
-# filepath = save_CSV(mn_df, 'TotalMinTemp', 'monthly', village_name)
-# print(f'completed: {filepath}')
+    # hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year, 'min')))
+    # yr_df = get_rainfall(hyd_yr_col, '%Y', 'degC/day', 'min', village_geometry)
+    # filepath = save_CSV(yr_df, 'MinMinTemp', 'hydYear', village_name, dataFol)
+    # print(f'completed: {filepath}')
 
-hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'mean')))
-mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'mean')
-filepath = save_CSV(mn_df, 'MeanMinTemp', 'monthly', village_name)
-print(f'completed: {filepath}')
+    # hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'sum')))
+    # mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC', 'sum', village_geometry)
+    # filepath = save_CSV(mn_df, 'TotalMinTemp', 'monthly', village_name, dataFol)
+    # print(f'completed: {filepath}')
 
-hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'median')))
-mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'median')
-filepath = save_CSV(mn_df, 'MedianMinTemp', 'monthly', village_name)
-print(f'completed: {filepath}')
+    hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'mean')))
+    mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'mean', village_geometry)
+    filepath = save_CSV(mn_df, 'MeanMinTemp', 'monthly', village_name, dataFol)
+    print(f'completed: {filepath}')
 
-hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'max')))
-mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'max')
-filepath = save_CSV(mn_df, 'MaxMinTemp', 'monthly', village_name)
-print(f'completed: {filepath}')
+    hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'median')))
+    mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'median', village_geometry)
+    filepath = save_CSV(mn_df, 'MedianMinTemp', 'monthly', village_name, dataFol)
+    print(f'completed: {filepath}')
 
-# hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'min')))
-# mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'min')
-# filepath = save_CSV(mn_df, 'MinMinTemp', 'monthly', village_name)
-# print(f'completed: {filepath}')
+    hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'max')))
+    mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'max', village_geometry)
+    filepath = save_CSV(mn_df, 'MaxMinTemp', 'monthly', village_name, dataFol)
+    print(f'completed: {filepath}')
 
-da_df = get_rainfall(precipitation_collection, '%Y-%m-%d', 'degC', 'mean')
-filepath = save_CSV(da_df, 'MinTemp', 'daily', village_name)
-print(f'completed: {filepath}')
+    # hyd_mn_col = ee.ImageCollection(ee.List(month_list).map(lambda yr_mn: monthly_sum(yr_mn, 'min')))
+    # mn_df = get_rainfall(hyd_mn_col, '%Y-%m', 'degC/day', 'min', village_geometry)
+    # filepath = save_CSV(mn_df, 'MinMinTemp', 'monthly', village_name, dataFol)
+    # print(f'completed: {filepath}')
+
+    da_df = get_rainfall(precipitation_collection, '%Y-%m-%d', 'degC', 'mean', village_geometry)
+    filepath = save_CSV(da_df, 'MinTemp', 'daily', village_name, dataFol)
+    print(f'completed: {filepath}')
+
+for village in village_list:
+    main(village)

@@ -6,17 +6,7 @@ from pathlib import Path
 from itertools import product
 
 district_name = 'raichur'
-village_name = 'sanbal'
-
-district_fc = ee.FeatureCollection(
-    'users/jaltolwelllabs/hackathonDists/hackathon_dists'
-    ).filter(ee.Filter.eq('district_n', district_name))
-village_fc = district_fc.filter(ee.Filter.eq('village_na', village_name))
-village_geometry = village_fc.geometry()
-precipitation_collection = ee.ImageCollection("users/jaltolwelllabs/IMD/rain")
-
-dataFol = Path.home().joinpath("Data", "hackathon", village_name)
-dataFol.mkdir(parents=True, exist_ok=True)
+village_list = ['sanbal', 'rampur']
 
 print('started!!!')
 
@@ -26,6 +16,7 @@ srtm_slope = ee.Terrain.slope(srtm)
 org_carbon = ee.Image("OpenLandMap/SOL/SOL_ORGANIC-CARBON_USDA-6A1C_M/v02").multiply(5)
 clay = ee.Image("OpenLandMap/SOL/SOL_CLAY-WFRACTION_USDA-3A1A1A_M/v02")
 bulk_density = ee.Image("OpenLandMap/SOL/SOL_BULKDENS-FINEEARTH_USDA-4A1H_M/v02").multiply(10)
+texture = ee.Image("OpenLandMap/SOL/SOL_TEXTURE-CLASS_USDA-TT_M/v02")
 
 datasets = [
     ('elevation(m)', fabdem, 'b1'),
@@ -49,6 +40,7 @@ datasets = [
     ('Soil Bulk Density(kg/m3)(100cm)', bulk_density.select(['b100']), 'b100'),
     ('Soil Bulk Density(kg/m3)(200cm)', bulk_density.select(['b200']), 'b200'),
 ]
+tex_classes = ['Cl', 'SiCl', 'SaCl', 'ClLo', 'SiClLo', 'SaClLo', 'Lo', 'SiLo', 'SaLo', 'Si', 'LoSa', 'Sa']
 
 def getStats(image: ee.Image, geometry: ee.Geometry, reducer, band_name) -> ee.Image:
     if reducer == 'min':
@@ -66,34 +58,45 @@ def getStats(image: ee.Image, geometry: ee.Geometry, reducer, band_name) -> ee.I
     )
     return stats.getInfo()[band_name]
 
-out_dict = {}
-for data in datasets:
-    label, image, band_name = data
-    for reducer in ('max', 'mean', 'median', 'min'):
-        out_dict.setdefault(label, {}).update({reducer:getStats(image, village_geometry, reducer, band_name)})
+def main(village_name):
+    district_fc = ee.FeatureCollection(
+        'users/jaltolwelllabs/hackathonDists/hackathon_dists'
+        ).filter(ee.Filter.eq('district_n', district_name))
+    village_fc = district_fc.filter(ee.Filter.eq('village_na', village_name))
+    village_geometry = village_fc.geometry()
+    precipitation_collection = ee.ImageCollection("users/jaltolwelllabs/IMD/rain")
 
-df = pd.DataFrame(out_dict).T
-filepath = dataFol.joinpath('terrain_soilProps.csv')
-df.to_csv(filepath)
-print(f'completed: {filepath}')
+    dataFol = Path.home().joinpath("Data", "hackathon", district_name, village_name)
+    dataFol.mkdir(parents=True, exist_ok=True)
+    out_dict = {}
+    for data in datasets:
+        label, image, band_name = data
+        for reducer in ('max', 'mean', 'median', 'min'):
+            out_dict.setdefault(label, {}).update({reducer:getStats(image, village_geometry, reducer, band_name)})
 
-texture = ee.Image("OpenLandMap/SOL/SOL_TEXTURE-CLASS_USDA-TT_M/v02")
-tex_classes = ['Cl', 'SiCl', 'SaCl', 'ClLo', 'SiClLo', 'SaClLo', 'Lo', 'SiLo', 'SaLo', 'Si', 'LoSa', 'Sa']
-tex_dict = {}
-for depth in ('0', '10', '30', '60', '100', '200'):
-    tex_image = texture.select([f'b{depth}'])
-    tex_dict[f'{depth}cm depth'] = {}
-    for ix, name in enumerate(tex_classes, start=1):
-        class_image = tex_image.eq(ix)
-        area_image = class_image.multiply(ee.Image.pixelArea())
-        stats = area_image.reduceRegion(
-            reducer=ee.Reducer.sum(),
-            geometry=village_geometry,
-            scale=30
-        ).getInfo()[f'b{depth}']
-        tex_dict[f'{depth}cm depth'][f'{name} (m2)'] = stats
+    df = pd.DataFrame(out_dict).T
+    filepath = dataFol.joinpath('terrain_soilProps.csv')
+    df.to_csv(filepath)
+    print(f'completed: {filepath}')
 
-df = pd.DataFrame(tex_dict)
-tex_file = dataFol.joinpath('soil_Texture.csv')
-df.to_csv(tex_file)
-print(f'completed: {tex_file}')
+    tex_dict = {}
+    for depth in ('0', '10', '30', '60', '100', '200'):
+        tex_image = texture.select([f'b{depth}'])
+        tex_dict[f'{depth}cm depth'] = {}
+        for ix, name in enumerate(tex_classes, start=1):
+            class_image = tex_image.eq(ix)
+            area_image = class_image.multiply(ee.Image.pixelArea())
+            stats = area_image.reduceRegion(
+                reducer=ee.Reducer.sum(),
+                geometry=village_geometry,
+                scale=30
+            ).getInfo()[f'b{depth}']
+            tex_dict[f'{depth}cm depth'][f'{name} (m2)'] = stats
+
+    df = pd.DataFrame(tex_dict)
+    tex_file = dataFol.joinpath('soil_Texture.csv')
+    df.to_csv(tex_file)
+    print(f'completed: {tex_file}')
+
+for village in village_list:
+    main(village)
