@@ -4,9 +4,10 @@ from pathlib import Path
 
 ee.Initialize()
 
+unique_field = 'village_na'
 buffer_distance = 10000  # 10 kilometers
 
-feature_collection = ee.FeatureCollection('users/balakumaranrm/PRADAN/WB_Sampled_Blocks')
+feature_collection = ee.FeatureCollection('users/balakumaranrm/PRADAN/villages_CH_WB')
 srtm = ee.Image('USGS/SRTMGL1_003').select('elevation')
 srtm_slope = ee.Terrain.slope(srtm)
 
@@ -25,7 +26,7 @@ def get_slope(fc, image):
     out_dict = {}
     for feat in stats['features']:
         props = feat['properties']
-        name = props['sd_name']
+        name = props[unique_field]
         value = props['median']
         out_dict[name]=value
     return out_dict
@@ -33,7 +34,7 @@ def get_slope(fc, image):
 def buffer_and_intersect(feature):
     buffered_feature = feature.geometry().buffer(buffer_distance)
 
-    filtered = feature_collection.filterBounds(buffered_feature).aggregate_array('sd_name')
+    filtered = feature_collection.filterBounds(buffered_feature).aggregate_array(unique_field)
     
     return feature.set('intersects', filtered)
 
@@ -43,16 +44,20 @@ def intersecting(fc):
     out_dict = {}
     for feat in result['features']:
         props = feat['properties']
-        name = props['sd_name']
+        # print(props)
+        name = props[unique_field]
+        # print(name)
         intersects = props['intersects']
-        intersects.remove(name)
+        # print(intersects)
+        if name in intersects:
+            intersects.remove(name)
         out_dict[name]=intersects
     return out_dict
 
 def main():
     print('started!!!')
     int_dict = intersecting(feature_collection)
-    # print(int_dict)
+    print(int_dict)
     slope_dict = get_slope(feature_collection, srtm_slope)
     # print(slope_dict)
     final_dict = {}
@@ -62,14 +67,13 @@ def main():
             village: {
                 filename: slope_dict[filename],
                 'median_slope': slope_dict[village],
-                'abs_perc_diff': abs(round(
+                'abs_perc_diff': abs(
                     (
                         (slope_dict[village] - slope_dict[filename])
                         / slope_dict[filename]
                     )
-                    * 100,
-                    2,
-                )),
+                    * 100
+                ),
             }
             for village in int_villages
         }
