@@ -271,6 +271,73 @@ def get_drainage_line(point_lyr, flow_acc_path, length, name):
     print('polyline layer added.')
     return layer, feature
 
+def processing2lyr(output_layer_id: str, lyr_name: str) -> None:
+    """
+    Add a processing output layer to the QGIS map.
+
+    Parameters:
+    - output_layer_id (str): ID of the processing output layer.
+    - lyr_name (str): Name to be assigned to the layer.
+    """
+    context = QgsProcessingContext()
+    output_layer = QgsProcessingUtils.mapLayerFromString(output_layer_id, context)
+    # Add the output layer to the QGIS map
+    QgsProject.instance().addMapLayer(output_layer)
+    output_layer.setName(lyr_name)
+
+def catchment_delineation(lat: float, long: float, drain_dir_path: str) -> str:
+    """
+    Perform catchment delineation using r.water.outlet processing algorithm.
+
+    Parameters:
+    - lat (float): Latitude of the outlet point.
+    - long (float): Longitude of the outlet point.
+    - drain_dir_path (str): Path to the drainage direction raster.
+
+    Returns:
+    str: ID of the output catchment layer.
+    """
+    print('processing the r.water.outlet for catchment layer')
+    params = {
+        'GRASS_RASTER_FORMAT_META' : '',
+        'GRASS_RASTER_FORMAT_OPT' : '',
+        'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
+        'GRASS_REGION_PARAMETER' : None,
+        'coordinates' : f'{long},{lat} [EPSG:4326]',
+        'input' : drain_dir_path,
+        'output' : 'TEMPORARY_OUTPUT'
+    }
+    result = processing.run("grass7:r.water.outlet", params)
+    output_layer_id = result['output']
+    processing2lyr(output_layer_id, 'catchment_delineated')
+    print('catchment delineation completed.')
+    return output_layer_id
+
+def catchment_polygonize(catchment_raster_path: str) -> str:
+    """
+    Polygonize the catchment raster using the gdal:polygonize processing algorithm.
+
+    Parameters:
+    - catchment_raster_path (str): Path to the catchment raster.
+
+    Returns:
+    str: ID of the output vector layer.
+    """
+    print('processing catchment raster to vector')
+    params = {
+        'INPUT':catchment_raster_path,
+        'BAND':1,
+        'FIELD':'val',
+        'EIGHT_CONNECTEDNESS':False,
+        'EXTRA':'',
+        'OUTPUT':'TEMPORARY_OUTPUT'
+    }
+    result = processing.run("gdal:polygonize", params)
+    output_layer_id = result['OUTPUT']
+    processing2lyr(output_layer_id, 'catchment_polygonized')
+    print('catchment polygonization completed.')
+    return output_layer_id
+
 def main(structure, csvpath):
     csv = pd.read_csv(csvpath)
     given_pt_list = []
@@ -278,6 +345,7 @@ def main(structure, csvpath):
     buffer_list = []
     warning_list = []
     line_list = []
+    catchment_list = []
     for row in csv.iterrows():
         df = row[1]
         latitude = df[lat_column]
@@ -303,12 +371,26 @@ def main(structure, csvpath):
             raise AttributeError('structure type is not found')
         QgsProject.instance().addMapLayer(structure_buffer)
         buffer_list.extend(iter(structure_buffer.getFeatures())) # append QgsFeatures to list
+        catchment_raster_path = catchment_delineation(lat, long, drain_dir)
+        catchment_poly_path = catchment_polygonize(catchment_raster_path)
+        catchment_poly = QgsVectorLayer(catchment_poly_path, f"{unique_field}_catchment", "ogr")
+        catchment_poly.startEditing()
+        if catchment_poly.dataProvider().fieldNameIndex("name") == -1:
+            catchment_poly.dataProvider().addAttributes([QgsField("name", QVariant.String)])
+            catchment_poly.updateFields()
+        id_new_col= catchment_poly.dataProvider().fieldNameIndex("name")
+        for feature in catchment_poly.getFeatures():
+            catchment_poly.changeAttributeValue(feature.id(), id_new_col, unique_field)
+        catchment_poly.commitChanges()
+        catchment_list.extend(iter(catchment_poly.getFeatures()))
     pt_fields = [QgsField('Longitude', QVariant.Double), QgsField('Latitude', QVariant.Double), QgsField('name', QVariant.String)]
     line_fields = [QgsField('name', QVariant.String)]
+    catch_fields = [QgsField('fid',QVariant.Int), QgsField('val',QVariant.Int), QgsField('name', QVariant.String)]
     total_layers = [
             ('combined_given_pt',"Point?crs=EPSG:4326",given_pt_list,pt_fields),
             ('combined_calc_pt',"Point?crs=EPSG:4326",calc_pt_list,pt_fields),
             ('combined_buffer',"Polygon?crs=EPSG:4326",buffer_list,line_fields),
+            ('combined_catchment',"Polygon?crs=EPSG:4326",catchment_list,catch_fields),
     ]
     if line_list: total_layers.append(('combined_drainage_lines','LineString?crs=EPSG:4326',line_list,line_fields))
     for name, path, feat_list, fields in total_layers:
@@ -332,6 +414,6 @@ def main(structure, csvpath):
     print('Completed!!!')
 
 
-# main('anicut', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Anicut_12Mar24.csv")
+main('anicut', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Anicut_12Mar24.csv")
 # main('pokher', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Pokher_12Mar24.csv")
 # main('taal', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Taal_12Mar24.csv")
