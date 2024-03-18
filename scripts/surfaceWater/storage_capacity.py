@@ -16,18 +16,21 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsFeature, QgsRasterLayer, Qg
 from typing import Tuple, List, Dict
 
 # input (change for each structure)
-dataset = 'alos' # 'alos' or 'fabdem'
-latitude = 27.84223
-longitude = 76.92458
-eff_height = 5
+dataset = 'fabdem' # 'alos' or 'fabdem'
+latitude = 26.581561
+longitude = 77.289162
+eff_height = 2.24
 
 # config for data and location of required files
 fabdem_px = 30 # pixel size
 fabdem_flow_acc_threshold = 20
 fabdem_buffer = 0.00081081081 # 90m
-fabdem = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM.tif'
-fabdem_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM.tif'
-fabdem_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM.tif'
+# fabdem = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM.tif'
+# fabdem_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM.tif'
+# fabdem_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM.tif'
+fabdem = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM_Karauli.tif"
+fabdem_flow_acc = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM_Karauli.tif"
+fabdem_drain_dir = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM_Karauli.tif"
 
 alos_px = 12.5
 alos_flow_acc_threshold = 500
