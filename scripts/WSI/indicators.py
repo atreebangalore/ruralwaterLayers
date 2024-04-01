@@ -44,21 +44,21 @@ def aggregate_dict(stat, unique_field):
     return {feat['properties'][unique_field]: feat['properties']['sum'] for feat in stat['features']}
 
 def access_indicator(year, fc, unique_field):
-    rabi_image = area_image(
+    irrig_image = area_image(
         get_crop_mask(
             fc, season_dict(year)['rabi_start'], season_dict(year)['rabi_end']
         )
     )
-    kharif_image = area_image(
+    crop_image = area_image(
         get_crop_mask(
-            fc, season_dict(year)['kharif_start'], season_dict(year)['kharif_end']
+            fc, season_dict(year)['kharif_start'], season_dict(year)['rabi_end']
         )
     )
     
-    rabi_stat = aggregate_dict(get_stats(rabi_image, fc), unique_field)
-    kharif_stat = aggregate_dict(get_stats(kharif_image, fc), unique_field)
-    access_scores = {village: -999.0 if kharif_stat[village]==0 else rabi_stat[village]/kharif_stat[village] for village in rabi_stat.keys()}
-    return access_scores, kharif_stat, rabi_stat
+    irrig_stat = aggregate_dict(get_stats(irrig_image, fc), unique_field)
+    crop_stat = aggregate_dict(get_stats(crop_image, fc), unique_field)
+    access_scores = {village: -999.0 if crop_stat[village]==0 else irrig_stat[village]/crop_stat[village] for village in irrig_stat.keys()}
+    return access_scores, crop_stat, irrig_stat
 
 if __name__=='__main__':
     print('started!!!')

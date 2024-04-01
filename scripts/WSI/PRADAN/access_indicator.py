@@ -108,16 +108,16 @@ for title, vills in villages.items():
     for year in range(start_year, end_year+1):
         roi = shrug.filter(ee.Filter.inList(unique_field, vills))
         print(f'calculating for {title} {year}')
-        access_scores, kharif_area, rabi_area = indicators.access_indicator(year, roi, unique_field)
+        access_scores, crop_area, irrig_area = indicators.access_indicator(year, roi, unique_field)
         access_out[year] = access_scores
-        kharif_out[year] = kharif_area
-        rabi_out[year] = rabi_area
+        kharif_out[year] = crop_area
+        rabi_out[year] = irrig_area
     access_path = Path(r'C:\Users\atree\Data\WSI').joinpath(f'{title}_access_indicator.csv')
-    kharif_path = Path(r'C:\Users\atree\Data\WSI').joinpath(f'{title}_kharif_area.csv')
-    rabi_path = Path(r'C:\Users\atree\Data\WSI').joinpath(f'{title}_rabi_area.csv')
+    crop_path = Path(r'C:\Users\atree\Data\WSI').joinpath(f'{title}_crop_area.csv')
+    irrig_path = Path(r'C:\Users\atree\Data\WSI').joinpath(f'{title}_irrig_area.csv')
     pd.DataFrame(access_out).to_csv(access_path)
-    pd.DataFrame(kharif_out).to_csv(kharif_path)
-    pd.DataFrame(rabi_out).to_csv(rabi_path)
+    pd.DataFrame(kharif_out).to_csv(crop_path)
+    pd.DataFrame(rabi_out).to_csv(irrig_path)
     print(f'completed {title}')
 
 print('Completed!!!')
