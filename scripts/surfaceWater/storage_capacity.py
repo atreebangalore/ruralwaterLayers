@@ -14,12 +14,17 @@ from PyQt5.QtCore import QVariant
 from qgis import processing
 from qgis.core import QgsProject, QgsVectorLayer, QgsFeature, QgsRasterLayer, QgsDistanceArea, QgsCoordinateReferenceSystem, QgsField, QgsFeature, QgsPointXY, QgsGeometry, QgsProcessingUtils, QgsProcessingContext, QgsExpression
 from typing import Tuple, List, Dict
+import pandas as pd
+from collections.abc import Iterable
 
 # input (change for each structure)
-dataset = 'fabdem' # 'alos' or 'fabdem'
-latitude = 26.581561
-longitude = 77.289162
-eff_height = 2.24
+inputs = [
+    ('fabdem', 26.581561, 77.289162, (2.24,3)),
+]
+# dataset = 'fabdem' # 'alos' or 'fabdem' or 'cartosat'
+# latitude = 26.581561
+# longitude = 77.289162
+# eff_height = 2.24
 
 # config for data and location of required files
 fabdem_px = 30 # pixel size
@@ -38,6 +43,15 @@ alos_buffer = 0.0009009009 # 100m
 alos = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Elevation_ALOS_EPSG4326.tif'
 alos_flow_acc = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Flow_Accumulation_ALOS.tif'
 alos_drain_dir = r'G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\ALOS\Reprojected\Drainage_Direction_ALOS.tif'
+
+cartosat_px = 10
+cartosat_flow_acc_threshold = 20000
+cartosat_buffer = 0.0009009009 # 100m
+cartosat = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\CartoSAT\P5_PAN_CD_N26_500_E077_250_DEM.tif"
+cartosat_flow_acc = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\CartoSAT\CARTOSAT_FlowAccu.tif"
+cartosat_drain_dir = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\CartoSAT\CARTOSAT_draindir.tif"
+
+outdict = {}
 
 # don't change anything after this line
 def point_layer(latitude: float, longitude: float, lyr_name: str) -> QgsVectorLayer:
@@ -105,11 +119,11 @@ def catchment_delineation(lat: float, long: float, drain_dir_path: str) -> str:
     }
     result = processing.run("grass7:r.water.outlet", params)
     output_layer_id = result['output']
-    processing2lyr(output_layer_id, 'catchment_delineated')
+    # processing2lyr(output_layer_id, 'catchment_delineated')
     print('catchment delineation completed.')
     return output_layer_id
 
-def catchment_polygonize(catchment_raster_path: str) -> str:
+def catchment_polygonize(catchment_raster_path: str, lyr_name: str) -> str:
     """
     Polygonize the catchment raster using the gdal:polygonize processing algorithm.
 
@@ -130,7 +144,7 @@ def catchment_polygonize(catchment_raster_path: str) -> str:
     }
     result = processing.run("gdal:polygonize", params)
     output_layer_id = result['OUTPUT']
-    processing2lyr(output_layer_id, 'catchment_polygonized')
+    processing2lyr(output_layer_id, lyr_name)
     print('catchment polygonization completed.')
     return output_layer_id
 
@@ -212,7 +226,7 @@ def dem_polygonize(masked_elev_path: str) -> QgsVectorLayer:
     result = processing.run("native:pixelstopolygons", params)
     return result['OUTPUT']
 
-def calc_depth(lowest_elev: float, eff_height: float, elev_lyr: QgsVectorLayer) -> QgsVectorLayer:
+def calc_depth(lowest_elev: float, eff_height: float, elev_lyr: QgsVectorLayer, lyr_name: str) -> QgsVectorLayer:
     """
     Calculate the depth based on the elevation.
 
@@ -225,17 +239,18 @@ def calc_depth(lowest_elev: float, eff_height: float, elev_lyr: QgsVectorLayer) 
     QgsVectorLayer: Updated elevation vector layer.
     """
     print('Calculation of depth based on elevation being carried out')
-    elev_lyr.dataProvider().addAttributes([QgsField('depth', QVariant.Double)])
+    column = lyr_name.replace('elevation_polygonized_','')[:10]
+    elev_lyr.dataProvider().addAttributes([QgsField(column, QVariant.Double)])
     elev_lyr.updateFields()
-    depth_col = elev_lyr.fields().lookupField('depth')
+    depth_col = elev_lyr.fields().lookupField(column)
     for f in elev_lyr.getFeatures():
         col_val = lowest_elev + eff_height - f['elevation']
         elev_lyr.dataProvider().changeAttributeValues({f.id(): {depth_col: col_val}})
     QgsProject.instance().addMapLayer(elev_lyr)
-    elev_lyr.setName('elevation_polygonized')
+    elev_lyr.setName(lyr_name)
     return elev_lyr
 
-def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float) -> QgsVectorLayer:
+def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float, lyr_name: str) -> QgsVectorLayer:
     """
     Extract pond pixels for the structure.
 
@@ -247,9 +262,10 @@ def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float) -> QgsVectorLayer:
     QgsVectorLayer: Pond pixels vector layer.
     """
     print('extracting pond pixels for the structure')
-    expression = QgsExpression(f'"depth" > 0 AND "depth" < {eff_height+50}')
+    column = lyr_name.replace('pond_pixels_','')[:10]
+    expression = QgsExpression(f'"{column}" > 0 AND "{column}" < {eff_height+50}')
     elev_lyr.setSubsetString(expression.expression())
-    pond_layer = QgsVectorLayer("Polygon?crs=EPSG:4326", "pond_pixels", "memory")
+    pond_layer = QgsVectorLayer("Polygon?crs=EPSG:4326", lyr_name, "memory")
     provider = pond_layer.dataProvider()
     pond_layer.startEditing()
     fields = elev_lyr.fields()
@@ -264,7 +280,7 @@ def pond_pixels(elev_lyr: QgsVectorLayer, eff_height: float) -> QgsVectorLayer:
     print('pond pixels layer created')
     return pond_layer
 
-def calc_volume(pond_lyr: QgsVectorLayer, px_size: float) -> None:
+def calc_volume(pond_lyr: QgsVectorLayer, px_size: float, column: str) -> float:
     """
     Calculate the volume of water columns.
 
@@ -273,11 +289,12 @@ def calc_volume(pond_lyr: QgsVectorLayer, px_size: float) -> None:
     - px_size (int): Pixel size.
     """
     print('calculating the volume of water columns')
-    px_list = [f['depth'] for f in pond_lyr.getFeatures()]
-    print(f'depth values considered for volume calculation: {px_list}')
+    px_list = [f[column[:10]] for f in pond_lyr.getFeatures()]
+    # print(f'depth values considered for volume calculation: {px_list}')
     volume = sum(px_list) * px_size * px_size
     print(f'volume is {round(volume,2)} m3')
     print(f'capacity of storage is {round(volume/10000,2)} crore litres')
+    return round(volume/10000,2)
 
 def create_buffer(point_lyr_path: str, buffer_distance: float) -> QgsVectorLayer:
     """
@@ -414,7 +431,12 @@ def check_projection(raster_path: str) -> None:
         print(f'{raster.crs().authid()} is the Projection of {raster_path}')
     del raster
 
-def main(data: str) -> None:
+def feature_counts(lyr: QgsVectorLayer) -> int:
+    count = lyr.featureCount()
+    print(f'no. of ponding pixels: {count}')
+    return count
+
+def main(data: str, latitude, longitude, eff_heights) -> None:
     """
     Main function to process data.
 
@@ -435,26 +457,49 @@ def main(data: str) -> None:
         px_size = alos_px
         buffer = alos_buffer
         threshold = alos_flow_acc_threshold
+    elif data == 'cartosat':
+        dem = cartosat
+        flow_acc = cartosat_flow_acc
+        drain_dir = cartosat_drain_dir
+        px_size = cartosat_px
+        buffer = cartosat_buffer
+        threshold = cartosat_flow_acc_threshold
     else:
         raise ValueError('mention the dataset used!')
     print(f'\n# {data} calculation:')
+    label = f'{latitude}_{longitude}'.replace('.','-')
     map(check_projection, (dem, flow_acc, drain_dir))
-    given_pt = point_layer(latitude, longitude, 'given_point')
+    given_pt = point_layer(latitude, longitude, f'given_point_{label}')
     lat, long, warning = correct_point(given_pt, flow_acc, buffer, threshold)
-    pt_lyr = point_layer(lat, long, 'calculated_point')
+    pt_lyr = point_layer(lat, long, f'calculated_point_{label}')
     catchment_raster_path = catchment_delineation(lat, long, drain_dir)
-    catchment_poly_path = catchment_polygonize(catchment_raster_path)
+    catchment_poly_path = catchment_polygonize(catchment_raster_path, f'catchment_polygonized_{label}')
     masked_elev_path = mask_dem(dem, catchment_poly_path)
-    processing2lyr(masked_elev_path, 'elevation_masked')
+    # processing2lyr(masked_elev_path, 'elevation_masked')
     print('masking elevation to catchment completed.')
     lowest_elev = low_elev_point(pt_lyr, masked_elev_path)
     elev_lyr = dem_polygonize(masked_elev_path)
     print('polygonizing masked elevation completed.')
-    elev_lyr = calc_depth(lowest_elev, eff_height, elev_lyr)
-    pond_lyr = pond_pixels(elev_lyr, eff_height)
-    calc_volume(pond_lyr, px_size)
-    print(warning)
+    if not isinstance(eff_heights, Iterable):
+        eff_heights = (eff_heights,)
+    for eff_height in eff_heights:
+        eff_label = f'{eff_height}_{latitude}_{longitude}'.replace('.','-')
+        print(f'processing: {eff_label}')
+        elev_lyr = calc_depth(lowest_elev, eff_height, elev_lyr, f'elevation_polygonized_{eff_label}')
+        pond_lyr = pond_pixels(elev_lyr, eff_height, f'pond_pixels_{eff_label}')
+        count = feature_counts(pond_lyr)
+        area = count * px_size * px_size
+        volume = calc_volume(pond_lyr, px_size, eff_label)
+        outdict[eff_label]={
+            f'Num_{data}': count,
+            # f'Pond_Area_m2_{data}': area,
+            f'Vol_{data}': volume
+        }
+        if warning: print(f'# {warning}')
 
 print('started...')
-main(dataset)
+for dataset, latitude, longitude, eff_heights in inputs:
+    main(dataset, latitude, longitude, eff_heights)
+df = pd.DataFrame(outdict).T
+print(df)
 print('completed!!!')
