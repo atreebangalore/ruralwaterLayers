@@ -4,8 +4,8 @@ import pandas as pd
 import rasterio
 
 path = r"C:\Users\atree\Documents\WELL_Labs\jaltol\Data\Prarambha-Distributaries"
-LULC_path = os.path.join(path, "LULC_Canal_Rasters")
-excel_path = os.path.join(path, 'excel_map.xlsx')
+LULC_path = os.path.join(path, "LULC_Canal_FIC_Rasters")
+excel_path = os.path.join(path, 'excel_map_selected_FIC.xlsx')
 
 for tif in os.listdir(LULC_path):
     if os.path.splitext(tif)[1] == '.tif':
