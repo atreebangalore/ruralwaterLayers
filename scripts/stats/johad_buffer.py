@@ -21,6 +21,8 @@ buffer = 90/111000 # 90m
 dem = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Elevation_FABDEM_Karauli.tif"
 flow_acc = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Flow_Accumulation_FABDEM_Karauli.tif"
 drain_dir = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Rasters\FABDEM\Drainage_Direction_FABDEM_Karauli.tif"
+dem_poly = r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\Vectors\FABDEM_Karauli_3kmBuffer_poly.shp"
+elev_poly = QgsVectorLayer(dem_poly, "dem polygon", "ogr")
 
 vectors_path = Path(r'C:\Users\atree\Documents\WELL_Labs\jaltol\TBS\vectors')
 
@@ -236,8 +238,8 @@ def correct_point(point_lyr: QgsVectorLayer, flow_acc_path: str, buffer_distance
 def get_drainage_line(point_lyr, flow_acc_path, length, name):
     starting_point = point_lyr.source()
     structure_buffer = create_buffer(starting_point, (length+30)/111000)
-    mask_path = mask_dem(flow_acc_path, structure_buffer)
-    elev_poly = dem_polygonize(mask_path)
+    # mask_path = mask_dem(flow_acc_path, structure_buffer)
+    # elev_poly = dem_polygonize(mask_path)
     threshold = 0
     threshold_list = [0]
     points_list = [list(point_lyr.getFeatures())[0].geometry().centroid().asPoint()]
@@ -248,7 +250,7 @@ def get_drainage_line(point_lyr, flow_acc_path, length, name):
         # filtered_px, warning = check_threshold(threshold, flow_px_list)
         # flow_px_list= tuple(filter(lambda x: x>=threshold, flow_px_list))
         flow_px_list= tuple(filter(lambda x: x not in threshold_list, flow_px_list))
-        max_flow = max(flow_px_list)
+        max_flow = min(flow_px_list)
         for f in selected_pixels.getFeatures():
             if f['elevation'] == max_flow:
                 centroid = f.geometry().centroid().asPoint()
@@ -360,11 +362,11 @@ def main(structure, csvpath):
         if structure == 'anicut':
             structure_buffer = create_buffer(pt_lyr.source(), anicut_buffer/111000)
         elif structure == 'pokher':
-            line_lyr, line_feat = get_drainage_line(pt_lyr, flow_acc, pokher_length, unique_field)
+            line_lyr, line_feat = get_drainage_line(pt_lyr, dem, pokher_length, unique_field)
             line_list.append(line_feat)
             structure_buffer = create_buffer(line_lyr.source(), pokher_buffer/111000)
         elif structure == 'taal':
-            line_lyr, line_feat = get_drainage_line(pt_lyr, flow_acc, taal_length, unique_field)
+            line_lyr, line_feat = get_drainage_line(pt_lyr, dem, taal_length, unique_field)
             line_list.append(line_feat)
             structure_buffer = create_buffer(line_lyr.source(), taal_buffer/111000)
         else:
@@ -414,6 +416,6 @@ def main(structure, csvpath):
     print('Completed!!!')
 
 
-main('anicut', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Anicut_12Mar24.csv")
+# main('anicut', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Anicut_12Mar24.csv")
 # main('pokher', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Pokher_12Mar24.csv")
-# main('taal', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Taal_12Mar24.csv")
+main('taal', r"G:\Shared drives\Jaltol\Engagement\TBS\Ishita - Analysis + Data\GIS_files\Johad_Structures\CSVs\anicut_pokher_taal_karauli\Taal_12Mar24.csv")
