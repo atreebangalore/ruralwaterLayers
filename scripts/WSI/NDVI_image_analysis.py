@@ -59,7 +59,7 @@ def ndvi_image(roi, start_date, end_date):
 def map_ndvi(image, lyr_name):
     Map.addLayer(image,
                 {'min': 0, 'max': 0.6, 'palette':['red','yellow','green']},
-                f'S2-{lyr_name}')
+                f'ndvi-{lyr_name}')
 
 def main():
     active_lyr = iface.activeLayer()
