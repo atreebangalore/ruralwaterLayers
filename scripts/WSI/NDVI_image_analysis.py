@@ -71,12 +71,14 @@ def map_srtm(image, roi):
             geometry=roi.geometry(),
             scale=30,
             crs='EPSG:4326',
+            maxPixels=1e11
         ).getInfo()['elevation']
     max_val = image.reduceRegion(
             reducer=ee.Reducer.max(),
             geometry=roi.geometry(),
             scale=30,
             crs='EPSG:4326',
+            maxPixels=1e11
         ).getInfo()['elevation']
     Map.addLayer(image,
                 {'min': min_val, 'max': max_val, 'palette':['red','yellow','blue']},
