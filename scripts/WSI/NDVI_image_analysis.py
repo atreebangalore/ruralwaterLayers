@@ -15,6 +15,7 @@ end_date = f"{year+1}-01-31"
 ee.Initialize()
 
 S2 = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+srtm = ee.Image("USGS/SRTMGL1_003")
 
 def lyr2ee(active_lyr):
     # Boundary will be automatically fetched from the QGIS active layer
@@ -61,6 +62,26 @@ def map_ndvi(image):
                 {'min': 0, 'max': 0.6, 'palette':['red','yellow','green']},
                 f'ndvi-{year}')
 
+def srtm_image(roi):
+    return srtm.clip(roi)
+
+def map_srtm(image, roi):
+    min_val = image.reduceRegion(
+            reducer=ee.Reducer.min(),
+            geometry=roi.geometry(),
+            scale=30,
+            crs='EPSG:4326',
+        ).getInfo()['elevation']
+    max_val = image.reduceRegion(
+            reducer=ee.Reducer.max(),
+            geometry=roi.geometry(),
+            scale=30,
+            crs='EPSG:4326',
+        ).getInfo()['elevation']
+    Map.addLayer(image,
+                {'min': min_val, 'max': max_val, 'palette':['red','yellow','blue']},
+                'elevation-srtm')
+
 def main():
     active_lyr = iface.activeLayer()
     lyr_name = active_lyr.name()
@@ -74,6 +95,10 @@ def main():
     ndvi = ndvi_image(roi, start_date, end_date)
     print('adding ndvi image to the QGIS workspace')
     map_ndvi(ndvi)
+    print('getting srtm image')
+    elev = srtm_image(roi)
+    print('adding srtm image to the QGIS workspace')
+    map_srtm(elev, roi)
     print('completed!!!')
 
 main()
