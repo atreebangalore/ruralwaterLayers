@@ -42,10 +42,10 @@ def s2_image(roi, start_date, end_date):
         .clip(roi)
     )
 
-def map_s2(image, lyr_name):
+def map_s2(image):
     Map.addLayer(image,
                 {'min': 0, 'max': 4500, 'gamma':1, 'bands': ['B4', 'B3', 'B2']},
-                f'S2-{lyr_name}')
+                f'S2-{year}')
 
 def ndvi_image(roi, start_date, end_date):
     image = S2.filterDate(start_date, end_date)\
@@ -56,10 +56,10 @@ def ndvi_image(roi, start_date, end_date):
         .clip(roi)
     return image.normalizedDifference(['B8', 'B4'])
 
-def map_ndvi(image, lyr_name):
+def map_ndvi(image):
     Map.addLayer(image,
                 {'min': 0, 'max': 0.6, 'palette':['red','yellow','green']},
-                f'ndvi-{lyr_name}')
+                f'ndvi-{year}')
 
 def main():
     active_lyr = iface.activeLayer()
@@ -69,11 +69,11 @@ def main():
     print('getting Sentinel image')
     sat_image = s2_image(roi, start_date, end_date)
     print('adding sentinel image to the QGIS workspace')
-    map_s2(sat_image, lyr_name)
+    map_s2(sat_image)
     print('getting ndvi image')
     ndvi = ndvi_image(roi, start_date, end_date)
     print('adding ndvi image to the QGIS workspace')
-    map_ndvi(ndvi, lyr_name)
+    map_ndvi(ndvi)
     print('completed!!!')
 
 main()
