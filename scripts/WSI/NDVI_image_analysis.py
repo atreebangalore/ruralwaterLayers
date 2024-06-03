@@ -5,6 +5,10 @@ from qgis.utils import iface
 import json
 
 # Inputs
+village_name = 'Oravoy'
+gcp_project = 'gcp-welllabs'
+export2drive = True
+qgis_layer = False
 year = 2019
 
 # constants
@@ -12,7 +16,7 @@ start_date = f"{year}-12-31"
 end_date = f"{year+1}-01-31"
 
 # Initialize Earth Engine
-ee.Initialize()
+ee.Initialize(project=gcp_project)
 
 S2 = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
 srtm = ee.Image("USGS/SRTMGL1_003")
@@ -84,6 +88,19 @@ def map_srtm(image, roi):
                 {'min': min_val, 'max': max_val, 'palette':['red','yellow','blue']},
                 'elevation-srtm')
 
+def export_layer(image, roi, data):
+    image_export_task = ee.batch.Export.image.toDrive(
+        image = image,
+        description = f'{village_name}_{data}_{year}',
+        region = roi.geometry(),
+        scale = 10,
+        maxPixels = 1e13,
+        crs = 'EPSG:4326'
+    )
+
+    image_export_task.start()
+    return image_export_task
+
 def main():
     active_lyr = iface.activeLayer()
     lyr_name = active_lyr.name()
@@ -91,16 +108,32 @@ def main():
     roi = lyr2ee(active_lyr)
     print('getting Sentinel image')
     sat_image = s2_image(roi, start_date, end_date)
-    print('adding sentinel image to the QGIS workspace')
-    map_s2(sat_image)
+    if qgis_layer:
+        print('adding sentinel image to the QGIS workspace')
+        map_s2(sat_image)
+    if export2drive:
+        print('sentinel image export to drive initiated')
+        sat_task = export_layer(sat_image, roi, 'sentinel2')
     print('getting ndvi image')
     ndvi = ndvi_image(roi, start_date, end_date)
-    print('adding ndvi image to the QGIS workspace')
-    map_ndvi(ndvi)
+    if qgis_layer:
+        print('adding ndvi image to the QGIS workspace')
+        map_ndvi(ndvi)
+    if export2drive:
+        print('NDVI image export to drive initiated')
+        ndvi_task = export_layer(ndvi, roi, 'NDVI')
     print('getting srtm image')
     elev = srtm_image(roi)
-    print('adding srtm image to the QGIS workspace')
-    map_srtm(elev, roi)
+    if qgis_layer:
+        print('adding srtm image to the QGIS workspace')
+        map_srtm(elev, roi)
+    if export2drive:
+        print('srtm image export to drive initiated')
+        elev_task = export_layer(elev, roi, 'SRTM')
+    if export2drive:
+        print(sat_task.status())
+        print(ndvi_task.status())
+        print(elev_task.status())
     print('completed!!!')
 
 main()
